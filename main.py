@@ -15,8 +15,11 @@ def parse_mentions(message):
 
 def lend(lender, debtors, name, sum, self_exept=False):
     response = ''
+    if not self_exept:
+        debtors.append(lender)
+    debtors = set(debtors)
+    interim_amount = sum / len(debtors)
     for debtor in debtors:
-        interim_amount = sum / len(debtors)
         entry = {'lender': lender,
                  'debtor': debtor,
                  'name': name,
@@ -32,7 +35,7 @@ def lend_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
     sum = int(args[1])
-    debtors = set(parse_mentions(update.message))
+    debtors = parse_mentions(update.message)
     responce = lend(lender, debtors, name, sum, self_exept=False)
     update.message.reply_text(responce)
 
@@ -41,7 +44,7 @@ def lend_self_except_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
     sum = int(args[1])
-    debtors = set(parse_mentions(update.message))
+    debtors = parse_mentions(update.message)
     responce = lend(lender, debtors, name, sum, self_exept=True)
     update.message.reply_text(responce)
 
