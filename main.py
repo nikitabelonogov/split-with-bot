@@ -1,25 +1,24 @@
-import pickle
-
-import os
-
 import datetime
-from telegram.ext import Updater, CommandHandler
 import logging
+import os
+import pickle
+from telegram.ext import Updater, CommandHandler
+import static
 
 
 class Debt(object):
-    def __init__(self, lender, debtor, name, sum, interim_amount):
+    def __init__(self, lender, debtor, name, total, interim_amount):
         self.lender = lender
         self.debtor = debtor
         self.name = name
         # TODO: DO NOT STORE MONEY IN FLOAT!
-        self.sum = float(sum)
+        self.total = float(total)
         self.interim_amount = float(interim_amount)
         self.date = datetime.datetime.now()
 
     def __str__(self):
         return '{} {} lent {} {:.0f}₽ for {:.0f}₽ {}'.format(
-            self.date.date(), self.lender, self.debtor, self.interim_amount, self.sum, self.name)
+            self.date.date(), self.lender, self.debtor, self.interim_amount, self.total, self.name)
 
     def __float__(self):
         return self.interim_amount
@@ -33,14 +32,14 @@ def parse_mentions(message):
     return result
 
 
-def lend(lender, debtors, name, sum, self_except=False):
+def lend(lender, debtors, name, total, self_except=False):
     response = ''
     if not self_except:
         debtors.append(lender)
     debtors = set(debtors)
-    interim_amount = sum / len(debtors)
+    interim_amount = total / len(debtors)
     for debtor in debtors:
-        debt = Debt(lender, debtor, name, sum, interim_amount)
+        debt = Debt(lender, debtor, name, total, interim_amount)
         DEBTS.append(debt)
         if not debt.lender == debt.debtor:
             response += str(debt) + '\n'
@@ -52,18 +51,18 @@ def lend(lender, debtors, name, sum, self_except=False):
 def lend_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
-    sum = float(args[1])
+    total = float(args[1])
     debtors = parse_mentions(update.message)
-    response = lend(lender, debtors, name, sum, self_except=False)
+    response = lend(lender, debtors, name, total, self_except=False)
     update.message.reply_text(response)
 
 
 def lend_self_except_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
-    sum = float(args[1])
+    total = float(args[1])
     debtors = parse_mentions(update.message)
-    response = lend(lender, debtors, name, sum, self_except=True)
+    response = lend(lender, debtors, name, total, self_except=True)
     update.message.reply_text(response)
 
 
@@ -95,11 +94,15 @@ def status_command(bot, update, args):
     update.message.reply_text(response)
 
 
+def help_command(bot, update, args):
+    update.message.reply_text(static.help_message)
+
+
 def error_callback(bot, update, error):
     try:
         raise error
     except Exception as e:
-        print(e)
+        logging.exception(str(e))
 
 
 if __name__ == '__main__':
@@ -108,8 +111,8 @@ if __name__ == '__main__':
     try:
         with open('data.pickle', 'rb') as f:
             DEBTS = pickle.load(f)
-    except Exception:
-        pass
+    except Exception as e:
+        logging.exception(str(e))
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.INFO)
@@ -122,6 +125,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('add_self_except', lend_self_except_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
+    updater.dispatcher.add_handler(CommandHandler('help', help_command, pass_args=True))
     updater.dispatcher.add_error_handler(error_callback)
 
     updater.start_polling()
