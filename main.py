@@ -1,3 +1,5 @@
+import pickle
+
 import os
 
 import datetime
@@ -19,7 +21,7 @@ class Debt(object):
         return '{} {} lent {} {:.0f}₽ for {:.0f}₽ {}'.format(
             self.date.date(), self.lender, self.debtor, self.interim_amount, self.sum, self.name)
 
-    def __int__(self):
+    def __float__(self):
         return self.interim_amount
 
 
@@ -42,6 +44,8 @@ def lend(lender, debtors, name, sum, self_except=False):
         DEBTS.append(debt)
         if not debt.lender == debt.debtor:
             response += str(debt) + '\n'
+    with open('data.pickle', 'wb') as f:
+        pickle.dump(DEBTS, f)
     return response
 
 
@@ -80,9 +84,9 @@ def status_command(bot, update, args):
     for debt in DEBTS:
         if not debt.lender == debt.debtor:
             if debt.lender == username:
-                totals[debt.debtor] = totals.get(debt.debtor, 0.) + int(debt)
+                totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
             elif debt.debtor == username:
-                totals[debt.lender] = totals.get(debt.debtor, 0.) - int(debt)
+                totals[debt.lender] = totals.get(debt.debtor, 0.) - float(debt)
     for username, total in totals.items():
         if total < 0:
             response += 'you owes {} {:.0f}₽ in total\n'.format(username, total)
@@ -101,6 +105,11 @@ def error_callback(bot, update, error):
 if __name__ == '__main__':
     TOKEN = os.environ.get('TOKEN')
     DEBTS = []
+    try:
+        with open('data.pickle', 'rb') as f:
+            DEBTS = pickle.load(f)
+    except Exception:
+        pass
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.INFO)
