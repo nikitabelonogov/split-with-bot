@@ -47,7 +47,7 @@ def parse_mentions(message):
 
 
 def lend(lender, debtors, name, total, self_except=False):
-    response = ''
+    response = []
     if not self_except:
         debtors.append(lender)
     debtors = set(debtors)
@@ -56,11 +56,12 @@ def lend(lender, debtors, name, total, self_except=False):
     for debtor in debtors:
         debt = Debt(lender, debtor, name, total, interim_amount)
         session.add(debt)
-        session.commit()
         if not debt.lender == debt.debtor:
-            response += str(debt) + '\n'
-    session.close()
-    return response
+            response.append(debt)
+    session.commit()
+    # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
+    # session.close()
+    return '\n'.join(map(str, response))
 
 
 def lend_command(bot, update, args):
@@ -83,19 +84,19 @@ def lend_self_except_command(bot, update, args):
 
 def history_command(bot, update, args):
     username = '@' + update.message.from_user.username
-    response = ''
+    response = []
     session = Session(bind=ENGINE)
     for row in session.query(Debt, Debt.id).all():
         debt = row.Debt
         if not debt.lender == debt.debtor:
             if debt.lender == username or debt.debtor == username:
-                response += str(debt) + '\n'
-    session.close()
-    update.message.reply_text(response)
+                response.append(debt)
+    # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
+    # session.close()
+    update.message.reply_text('\n'.join(map(str, response)))
 
 
 def status_command(bot, update, args):
-    response = ''
     username = '@' + update.message.from_user.username
     totals = {}
     session = Session(bind=ENGINE)
@@ -106,13 +107,15 @@ def status_command(bot, update, args):
                 totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
             elif debt.debtor == username:
                 totals[debt.lender] = totals.get(debt.debtor, 0.) - float(debt)
-    session.close()
+    # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
+    # session.close()
+    response = []
     for username, total in totals.items():
         if total < 0:
-            response += 'you owes {} {:.0f}₽ in total\n'.format(username, total)
+            response.append('you owes {} {:.0f}₽ in total\n'.format(username, total))
         elif total > 0:
-            response += 'you lent {} {:.0f}₽ in total\n'.format(username, total)
-    update.message.reply_text(response)
+            response.append('you lent {} {:.0f}₽ in total\n'.format(username, total))
+    update.message.reply_text('\n'.join(response))
 
 
 def help_command(bot, update, args):
@@ -132,7 +135,10 @@ if __name__ == '__main__':
     URL = os.environ.get('URL')
     PORT = os.environ.get('PORT')
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    ENGINE = create_engine(DATABASE_URL)
+    DEBUG = bool(os.environ.get('DEBUG'))
+
+    ENGINE = create_engine(DATABASE_URL, echo=DEBUG)
+
     Base.metadata.create_all(ENGINE)
 
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
