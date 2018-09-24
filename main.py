@@ -61,7 +61,7 @@ def lend(lender, debtors, name, total, self_except=False):
     session.commit()
     # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
     # session.close()
-    return '\n'.join(map(str, response))
+    return response
 
 
 def lend_command(bot, update, args):
@@ -70,7 +70,10 @@ def lend_command(bot, update, args):
     total = float(args[1])
     debtors = parse_mentions(update.message)
     response = lend(lender, debtors, name, total, self_except=False)
-    update.message.reply_text(response)
+    if response:
+        update.message.reply_text('\n'.join(map(str, response)))
+    else:
+        update.message.reply_text('No entries found')
 
 
 def lend_self_except_command(bot, update, args):
@@ -79,7 +82,10 @@ def lend_self_except_command(bot, update, args):
     total = float(args[1])
     debtors = parse_mentions(update.message)
     response = lend(lender, debtors, name, total, self_except=True)
-    update.message.reply_text(response)
+    if not response:
+        update.message.reply_text('\n'.join(map(str, response)))
+    else:
+        update.message.reply_text('No entries found')
 
 
 def history_command(bot, update, args):
@@ -93,7 +99,10 @@ def history_command(bot, update, args):
                 response.append(debt)
     # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
     # session.close()
-    update.message.reply_text('\n'.join(map(str, response)))
+    if response:
+        update.message.reply_text('\n'.join(map(str, response)))
+    else:
+        update.message.reply_text('No entries found')
 
 
 def status_command(bot, update, args):
@@ -115,7 +124,10 @@ def status_command(bot, update, args):
             response.append('you owes {} {:.0f}₽ in total\n'.format(username, total))
         elif total > 0:
             response.append('you lent {} {:.0f}₽ in total\n'.format(username, total))
-    update.message.reply_text('\n'.join(response))
+    if response:
+        update.message.reply_text('\n'.join(response))
+    else:
+        update.message.reply_text('No entries found')
 
 
 def help_command(bot, update, args):
