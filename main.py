@@ -88,7 +88,7 @@ def lend_self_except_command(bot, update, args):
         update.message.reply_text('No entries found')
 
 
-def history_command(bot, update, args):
+def history_command(bot, update):
     username = '@' + update.message.from_user.username
     response = []
     session = Session(bind=ENGINE)
@@ -105,7 +105,7 @@ def history_command(bot, update, args):
         update.message.reply_text('No entries found')
 
 
-def status_command(bot, update, args):
+def status_command(bot, update):
     username = '@' + update.message.from_user.username
     totals = {}
     session = Session(bind=ENGINE)
@@ -130,7 +130,11 @@ def status_command(bot, update, args):
         update.message.reply_text('No entries found')
 
 
-def help_command(bot, update, args):
+def start_command(bot, update):
+    update.message.reply_text(static.start_message)
+
+
+def help_command(bot, update):
     update.message.reply_text(static.help_message)
 
 
@@ -162,9 +166,10 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('lend_self_except', lend_self_except_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('add', lend_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('add_self_except', lend_self_except_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('help', help_command, pass_args=True))
+    updater.dispatcher.add_handler(CommandHandler('history', history_command))
+    updater.dispatcher.add_handler(CommandHandler('status', status_command))
+    updater.dispatcher.add_handler(CommandHandler('start', start_command))
+    updater.dispatcher.add_handler(CommandHandler('help', help_command))
     updater.dispatcher.add_error_handler(error_callback)
 
     if MODE == 'webhook':
