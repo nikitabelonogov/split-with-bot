@@ -120,11 +120,11 @@ def status_command(bot, update):
     response = []
     for username, total in totals.items():
         if total < 0:
-            response.append('you owes {} {:.0f}₽ in total\n'.format(username, total))
+            response.append('you owes {} {:.0f}₽ in total'.format(username, total))
         elif total > 0:
-            response.append('you lent {} {:.0f}₽ in total\n'.format(username, total))
+            response.append('you lent {} {:.0f}₽ in total'.format(username, total))
     if response:
-        update.message.reply_text('\n'.join(response))
+        update.message.reply_text('\n'.join(map(str, response)))
     else:
         update.message.reply_text('No entries found')
 
