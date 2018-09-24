@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from sqlalchemy import Column, Integer, String, Float, create_engine, DateTime
+from sqlalchemy import Column, Integer, String, Float, create_engine, DateTime, or_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from telegram.ext import Updater, CommandHandler
@@ -82,7 +82,7 @@ def lend_self_except_command(bot, update, args):
     total = float(args[1])
     debtors = parse_mentions(update.message)
     response = lend(lender, debtors, name, total, self_except=True)
-    if not response:
+    if response:
         update.message.reply_text('\n'.join(map(str, response)))
     else:
         update.message.reply_text('No entries found')
@@ -90,13 +90,11 @@ def lend_self_except_command(bot, update, args):
 
 def history_command(bot, update):
     username = '@' + update.message.from_user.username
-    response = []
     session = Session(bind=ENGINE)
-    for row in session.query(Debt, Debt.id).all():
-        debt = row.Debt
-        if not debt.lender == debt.debtor:
-            if debt.lender == username or debt.debtor == username:
-                response.append(debt)
+    response = session.query(Debt). \
+        filter(Debt.lender != Debt.debtor). \
+        filter(or_(Debt.lender == username, Debt.debtor == username)). \
+        all()
     # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
     # session.close()
     if response:
@@ -109,13 +107,14 @@ def status_command(bot, update):
     username = '@' + update.message.from_user.username
     totals = {}
     session = Session(bind=ENGINE)
-    for row in session.query(Debt, Debt.id).all():
-        debt = row.Debt
-        if not debt.lender == debt.debtor:
-            if debt.lender == username:
-                totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
-            elif debt.debtor == username:
-                totals[debt.lender] = totals.get(debt.debtor, 0.) - float(debt)
+    for debt in session.query(Debt). \
+            filter(Debt.lender != Debt.debtor). \
+            filter(or_(Debt.lender == username, Debt.debtor == username)). \
+            all():
+        if debt.lender == username:
+            totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
+        elif debt.debtor == username:
+            totals[debt.lender] = totals.get(debt.debtor, 0.) - float(debt)
     # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
     # session.close()
     response = []
