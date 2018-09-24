@@ -1,3 +1,5 @@
+sqlalchemy
+psycopg2
 pyTelegramBotAPI==3.6.6
 python-telegram-bot==11.1.0
 gunicorn==19.9.0
