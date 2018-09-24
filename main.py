@@ -128,6 +128,9 @@ def error_callback(bot, update, error):
 
 if __name__ == '__main__':
     TOKEN = os.environ.get('TOKEN')
+    MODE = os.environ.get('MODE')
+    URL = os.environ.get('URL')
+    PORT = os.environ.get('PORT')
     DATABASE_URL = os.environ.get('DATABASE_URL')
     ENGINE = create_engine(DATABASE_URL)
     Base.metadata.create_all(ENGINE)
@@ -146,5 +149,10 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('help', help_command, pass_args=True))
     updater.dispatcher.add_error_handler(error_callback)
 
-    updater.start_polling()
-    updater.idle()
+    if MODE == 'webhook':
+        updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
+        updater.bot.setWebhook(URL + '/' + TOKEN)
+        updater.idle()
+    elif MODE == 'polling':
+        updater.start_polling()
+        updater.idle()
