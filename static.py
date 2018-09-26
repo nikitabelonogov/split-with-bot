@@ -1,12 +1,12 @@
 help_message = \
     """
-lend - lend [name] [sum] [users...]
-lend_self_except - lend except your self [name] [sum] [users...]
-history - show history of debts 
-status - show totals
-help - help
+lend - /lend [name] [sum] [username...] - lend
+lend_self_except - /lend_self_except [name] [sum] [username...] - lend except your self
+history - /history [username] - show history of debts 
+status - /status [username] - show totals
+help - /help - show help message
 """
 start_message = \
     """
-collaborative book of debtors
+This telegram bot helps you to split a receipts with your friends.
 """

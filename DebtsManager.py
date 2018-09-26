@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, or_
+from sqlalchemy import create_engine, or_, and_
 from sqlalchemy.orm import sessionmaker
 
 from Debt import Base, Debt
@@ -28,11 +28,16 @@ class DebtsManager:
         # session.close()
         return result
 
-    def related_debts(self, username):
+    def related_debts(self, username1, username2=None):
         session = Session(bind=self.engine)
-        return session.query(Debt). \
-            filter(Debt.lender != Debt.debtor). \
-            filter(or_(Debt.lender == username, Debt.debtor == username)). \
-            all()
-        # TODO: http://docs.sqlalchemy.org/en/latest/errors.html#error-bhk3
-        # session.close()
+        if username2:
+            return session.query(Debt). \
+                filter(Debt.lender != Debt.debtor). \
+                filter(or_(and_(Debt.lender == username1, Debt.debtor == username2),
+                           and_(Debt.lender == username2, Debt.debtor == username1))). \
+                all()
+        else:
+            return session.query(Debt). \
+                filter(Debt.lender != Debt.debtor). \
+                filter(or_(Debt.lender == username1, Debt.debtor == username1)). \
+                all()

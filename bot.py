@@ -32,16 +32,25 @@ def lend_self_except_command(bot, update, args):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def history_command(bot, update):
+def history_command(bot, update, args):
     username = '@' + update.message.from_user.username
-    response = debts_manager.related_debts(username)
+    if args:
+        username2 = args[0]
+        response = debts_manager.related_debts(username, username2)
+    else:
+        response = debts_manager.related_debts(username)
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def status_command(bot, update):
+def status_command(bot, update, args):
     username = '@' + update.message.from_user.username
+    if args:
+        username2 = args[0]
+        debts = debts_manager.related_debts(username, username2)
+    else:
+        debts = debts_manager.related_debts(username)
     totals = {}
-    for debt in debts_manager.related_debts(username):
+    for debt in debts:
         if debt.lender == username:
             totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
         elif debt.debtor == username:
@@ -88,8 +97,8 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('lend_self_except', lend_self_except_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('add', lend_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('add_self_except', lend_self_except_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('history', history_command))
-    updater.dispatcher.add_handler(CommandHandler('status', status_command))
+    updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
+    updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('start', start_command))
     updater.dispatcher.add_handler(CommandHandler('help', help_command))
     updater.dispatcher.add_error_handler(error_callback)
