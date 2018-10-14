@@ -33,11 +33,13 @@ class DebtsManager:
         if username2:
             return session.query(Debt). \
                 filter(Debt.lender != Debt.debtor). \
+                filter(Debt.active). \
                 filter(or_(and_(Debt.lender == username1, Debt.debtor == username2),
                            and_(Debt.lender == username2, Debt.debtor == username1))). \
                 all()
         else:
             return session.query(Debt). \
                 filter(Debt.lender != Debt.debtor). \
+                filter(Debt.active). \
                 filter(or_(Debt.lender == username1, Debt.debtor == username1)). \
                 all()

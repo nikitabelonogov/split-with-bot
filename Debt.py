@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Integer, Column, String, Float, DateTime
+from sqlalchemy import Integer, Column, String, Float, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -14,6 +14,7 @@ class Debt(Base):
     # TODO: DO NOT STORE MONEY IN FLOAT!
     total = Column(Float)
     interim_amount = Column(Float)
+    active = Column(Boolean, default=True)
     datetime = Column(DateTime, default=datetime.datetime.utcnow)
 
     def __init__(self, lender, debtor, name, total, interim_amount):
