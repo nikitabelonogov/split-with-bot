@@ -54,11 +54,11 @@ def status_command(bot, update, args):
         if debt.lender == username:
             totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
         elif debt.debtor == username:
-            totals[debt.lender] = totals.get(debt.debtor, 0.) - float(debt)
+            totals[debt.lender] = totals.get(debt.lender, 0.) - float(debt)
     response = []
     for username, total in totals.items():
         if total < 0:
-            response.append('you owes {} {:.0f}₽ in total'.format(username, total))
+            response.append('you owes {} {:.0f}₽ in total'.format(username, -total))
         elif total > 0:
             response.append('you lent {} {:.0f}₽ in total'.format(username, total))
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
