@@ -14,16 +14,18 @@ def parse_mentions(message):
     return result
 
 
-def lend_command(bot, update, args):
+def split_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
     total = float(args[1])
     debtors = parse_mentions(update.message)
+    print(update.message)
+    print(debtors)
     response = debts_manager.lend(lender, debtors, name, total, self_except=False)
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def lend_self_except_command(bot, update, args):
+def lend_command(bot, update, args):
     lender = '@' + update.message.from_user.username
     name = args[0]
     total = float(args[1])
@@ -93,10 +95,8 @@ if __name__ == '__main__':
     debts_manager = DebtsManager(DATABASE_URL, DEBUG)
     updater = Updater(TOKEN)
 
+    updater.dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('lend_self_except', lend_self_except_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('add', lend_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('add_self_except', lend_self_except_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('start', start_command))

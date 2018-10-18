@@ -4,10 +4,8 @@ This telegram bot helps you to split a receipts with your friends
 ## Usage
 | command               | notes                                               |
 |-----------------------|-----------------------------------------------------|
-| `lend`                | lend \[name\] \[sum\] \[users...\]                  |
-| `add`                 | alias for `lend`                                    |
-| `lend_self_except`    | lend except your self \[name\] \[sum\] \[users...\] |
-| `add_self_except`     | alias for `lend_self_except`                        |
+| `split`               | lend a split check between users and you            |
+| `lend`                | lend a split check between users                    |
 | `history`             | show history of debts related to you                |
 | `status`              | show your totals                                    |
 | `help`                | show help                                           |

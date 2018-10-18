@@ -16,7 +16,7 @@ class DebtsManager:
         if not self_except:
             debtors.append(lender)
         debtors = set(debtors)
-        interim_amount = total / len(debtors)
+        interim_amount = total / len(debtors) if len(debtors) else total
         session = Session(bind=self.engine)
         for debtor in debtors:
             debt = Debt(lender, debtor, name, total, interim_amount)

@@ -1,7 +1,7 @@
 help_message = \
     """
-lend - /lend [name] [sum] [username...] - lend
-lend_self_except - /lend_self_except [name] [sum] [username...] - lend except your self
+split - /split [name] [sum] [username...] - lend a split check between users and you
+lend - /lend [name] [sum] [username...] - lend a split check between users
 history - /history [username] - show history of debts 
 status - /status [username] - show totals
 help - /help - show help message
