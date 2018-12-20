@@ -5,4 +5,4 @@ python-telegram-bot==11.1.0
 gunicorn==19.9.0
 PySocks
 requests>=2.20.0
-urllib3==1.21.1
+urllib3>=1.23
