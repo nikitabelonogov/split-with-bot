@@ -66,6 +66,16 @@ def status_command(bot, update, args):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
+def delete_command(bot, update, args):
+    username = '@' + update.message.from_user.username
+    if args:
+        for username2 in args:
+            debts_manager.delete(username, username2)
+        update.message.reply_text('Deleted')
+    else:
+        update.message.reply_text('No username specified')
+
+
 def start_command(bot, update):
     update.message.reply_text(static.start_message)
 
@@ -99,6 +109,7 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
+    updater.dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
     updater.dispatcher.add_handler(CommandHandler('start', start_command))
     updater.dispatcher.add_handler(CommandHandler('help', help_command))
     updater.dispatcher.add_error_handler(error_callback)

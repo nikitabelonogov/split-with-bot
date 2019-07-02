@@ -8,6 +8,7 @@ This telegram bot helps you to split a receipts with your friends
 | `lend`                | lend a split check between users                    |
 | `history`             | show history of debts related to you                |
 | `status`              | show your totals                                    |
+| `delete`              | delete history                                      |
 | `help`                | show help                                           |
 
 ## Deployment
