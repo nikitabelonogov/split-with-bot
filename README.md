@@ -12,7 +12,7 @@ This telegram bot helps you to split a receipts with your friends
 | `help`                | show help                                           |
 
 ## Deployment
-### Evironment Variables
+### Environment Variables
 | environment variable  | notes                   |
 |-----------------------|-------------------------|
 | TOKEN                 | telegram bot token      |
