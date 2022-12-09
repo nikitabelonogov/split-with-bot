@@ -19,7 +19,8 @@ def parse_mentions(message):
     return result
 
 
-def split_command(bot, update, args):
+def split_command(update, context):
+    args = context.args
     lender = '@' + update.message.from_user.username
     name = args[0]
     total = float(args[1])
@@ -30,16 +31,18 @@ def split_command(bot, update, args):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def lend_command(bot, update, args):
+def lend_command(update, context):
+    args = context.args
     lender = '@' + update.message.from_user.username
-    name = args[0]
+    name = ' '.join(args[2:])
     total = float(args[1])
     debtors = parse_mentions(update.message)
     response = debts_manager.lend(lender, debtors, name, total, self_except=True)
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def history_command(bot, update, args):
+def history_command(update, context):
+    args = context.args
     username = '@' + update.message.from_user.username
     if args:
         username2 = args[0]
@@ -49,7 +52,8 @@ def history_command(bot, update, args):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def status_command(bot, update, args):
+def status_command(update, context):
+    args = context.args
     username = '@' + update.message.from_user.username
     if args:
         username2 = args[0]
@@ -71,7 +75,8 @@ def status_command(bot, update, args):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def delete_command(bot, update, args):
+def delete_command(update, context):
+    args = context.args
     username = '@' + update.message.from_user.username
     if args:
         for username2 in args:
@@ -81,15 +86,20 @@ def delete_command(bot, update, args):
         update.message.reply_text('No username specified')
 
 
-def start_command(bot, update):
+def start_command(update, context):
+    args = context.args
     update.message.reply_text(static.start_message)
 
 
-def help_command(bot, update):
-    update.message.reply_text(static.help_message)
+def help_command(update, context):
+    args = context.args
+    update.message.reply_text(static.help_message, parse_mode='html')
 
 
-def error_callback(bot, update, error):
+def error_callback(update, context):
+    args = context.args
+    error = context.error
+    update.message.reply_text(f'[ERROR]:\n{str(error)}')
     try:
         raise error
     except Exception as e:
@@ -98,23 +108,24 @@ def error_callback(bot, update, error):
 
 if __name__ == '__main__':
     TOKEN = os.environ.get('TOKEN')
-    MODE = os.environ.get('MODE')
+    MODE = os.environ.get('MODE', "")
     URL = os.environ.get('URL')
-    PORT = os.environ.get('PORT')
+    PORT = os.environ.get('PORT', 80)
     DATABASE_URL = os.environ.get('DATABASE_URL')
     DEBUG = bool(os.environ.get('DEBUG'))
 
     debts_manager = DebtsManager(DATABASE_URL, DEBUG)
     updater = Updater(TOKEN)
+    dispatcher = updater.dispatcher
 
-    updater.dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
-    updater.dispatcher.add_handler(CommandHandler('start', start_command))
-    updater.dispatcher.add_handler(CommandHandler('help', help_command))
-    updater.dispatcher.add_error_handler(error_callback)
+    dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('status', status_command))
+    dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('start', start_command))
+    dispatcher.add_handler(CommandHandler('help', help_command))
+    dispatcher.add_error_handler(error_callback)
 
     if MODE.lower() == 'webhook':
         updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
@@ -124,4 +135,4 @@ if __name__ == '__main__':
         updater.start_polling()
         updater.idle()
     else:
-        print(f'[ERROR] MODE should either "WEBHOOK", either "polling". MODE "${MODE}" is not supported.')
+        print(f'[ERROR] MODE should either "WEBHOOK", either "polling". MODE "{MODE}" is not supported.')

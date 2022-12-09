@@ -1,4 +1,6 @@
 import datetime
+from typing import Any
+
 from sqlalchemy import Integer, Column, String, Float, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
