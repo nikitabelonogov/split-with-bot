@@ -5,6 +5,11 @@ from telegram.ext import Updater, CommandHandler
 import static
 from DebtsManager import DebtsManager
 
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+)
+
 
 def parse_mentions(message):
     result = []
@@ -99,9 +104,6 @@ if __name__ == '__main__':
     DATABASE_URL = os.environ.get('DATABASE_URL')
     DEBUG = bool(os.environ.get('DEBUG'))
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                        level=logging.INFO)
-
     debts_manager = DebtsManager(DATABASE_URL, DEBUG)
     updater = Updater(TOKEN)
 
@@ -114,10 +116,12 @@ if __name__ == '__main__':
     updater.dispatcher.add_handler(CommandHandler('help', help_command))
     updater.dispatcher.add_error_handler(error_callback)
 
-    if MODE == 'webhook':
+    if MODE.lower() == 'webhook':
         updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
         updater.bot.setWebhook(URL + '/' + TOKEN)
         updater.idle()
-    elif MODE == 'polling':
+    elif MODE.lower() == 'polling':
         updater.start_polling()
         updater.idle()
+    else:
+        print(f'[ERROR] MODE should either "WEBHOOK", either "polling". MODE "${MODE}" is not supported.')

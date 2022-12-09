@@ -17,7 +17,8 @@ class Debt(Base):
     active = Column(Boolean, default=True)
     datetime = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, lender, debtor, name, total, interim_amount):
+    def __init__(self, lender, debtor, name, total, interim_amount, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
         self.lender = lender
         self.debtor = debtor
         self.name = name

@@ -22,5 +22,9 @@ This telegram bot helps you to split a receipts with your friends
 | PORT                  | heroku app port         |
 | DEBUG                 | debug                   |
 
+### webhook mode
+
+### pooling mode
+
 ## License
 This project is licensed under [GLWTPL](./LICENSE)
