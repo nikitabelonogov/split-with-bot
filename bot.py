@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 
 
-def parse_mentions(message):
+def parse_mentions(message) -> list[str]:
     result = []
     mentions = [x for x in message['entities'] if x['type'] == 'mention']
     for mention in mentions:
@@ -24,20 +24,35 @@ def parse_mentions(message):
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     lender = '@' + update.message.from_user.username
-    name = args[0]
-    total = float(args[1])
+    name = ' '.join(args)
+    for arg in args:
+        try:
+            total = float(arg)
+        except:
+            pass
     debtors = parse_mentions(update.message)
-    print(update.message)
-    print(debtors)
-    response = debts_manager.lend(lender, debtors, name, total, self_except=False)
-    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
+    debtors.append(lender)
+    debtors = list(set(debtors))
+    response = debts_manager.lend(lender, debtors, name, total, self_except=True)
+    buttons = [[
+        telegram.InlineKeyboardButton("⛔️", callback_data="callback"),
+    ]]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='\n'.join(map(str, response)) or 'No entries found',
+        reply_markup=telegram.InlineKeyboardMarkup(buttons),
+    )
 
 
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     lender = '@' + update.message.from_user.username
-    name = ' '.join(args[2:])
-    total = float(args[1])
+    name = ' '.join(args)
+    for arg in args:
+        try:
+            total = float(arg)
+        except:
+            pass
     debtors = parse_mentions(update.message)
     response = debts_manager.lend(lender, debtors, name, total, self_except=True)
     buttons = [[
