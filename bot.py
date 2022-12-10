@@ -1,6 +1,8 @@
 import logging
 import os
-from telegram.ext import Updater, CommandHandler
+
+import telegram
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 import static
 from DebtsManager import DebtsManager
@@ -19,7 +21,7 @@ def parse_mentions(message):
     return result
 
 
-def split_command(update, context):
+def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     lender = '@' + update.message.from_user.username
     name = args[0]
@@ -31,17 +33,24 @@ def split_command(update, context):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def lend_command(update, context):
+def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     lender = '@' + update.message.from_user.username
     name = ' '.join(args[2:])
     total = float(args[1])
     debtors = parse_mentions(update.message)
     response = debts_manager.lend(lender, debtors, name, total, self_except=True)
-    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
+    buttons = [[
+        telegram.InlineKeyboardButton("⛔️", callback_data="callback"),
+    ]]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='\n'.join(map(str, response)) or 'No entries found',
+        reply_markup=telegram.InlineKeyboardMarkup(buttons),
+    )
 
 
-def history_command(update, context):
+def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
     if args:
@@ -52,7 +61,7 @@ def history_command(update, context):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def status_command(update, context):
+def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
     if args:
@@ -75,7 +84,7 @@ def status_command(update, context):
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def delete_command(update, context):
+def delete_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
     if args:
@@ -86,24 +95,28 @@ def delete_command(update, context):
         update.message.reply_text('No username specified')
 
 
-def start_command(update, context):
+def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     update.message.reply_text(static.start_message)
 
 
-def help_command(update, context):
+def help_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     update.message.reply_text(static.help_message, parse_mode='html')
 
 
-def error_callback(update, context):
+def error_callback(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     error = context.error
     update.message.reply_text(f'[ERROR]:\n{str(error)}')
-    try:
-        raise error
-    except Exception as e:
-        logging.exception(str(e))
+    print(str(error))
+
+
+def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext):
+    query = update.callback_query.data
+    message = update.callback_query.message
+    update.callback_query.answer()
+    context.bot.delete_message(chat_id=message.chat_id, message_id=message.message_id)
 
 
 if __name__ == '__main__':
@@ -120,6 +133,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
+    dispatcher.add_handler(CallbackQueryHandler(queryHandler))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('status', status_command))
     dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
