@@ -12,6 +12,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+
 # TODO: integrate logger
 
 def parse_mentions(message) -> list[str]:
@@ -35,7 +36,13 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
     debtors = parse_mentions(update.message)
     debtors.append(lender)
     debtors = list(set(debtors))
-    response = debts_manager.lend(lender, debtors, name, total, self_except=True)
+    response = debts_manager.lend(
+        lender, debtors, name, total,
+        self_except=True,
+        group_type=update.effective_chat.type,
+        chat_id=update.effective_chat.id,
+        message_id=update.effective_message.message_id,
+    )
     buttons = [[
         telegram.InlineKeyboardButton("⛔️", callback_data="callback"),
     ]]
@@ -49,6 +56,8 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
 # TODO: merge lend and split commands
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     # TODO: Add interactive lend
+    print(update)
+    print(context)
     args = context.args
     lender = '@' + update.message.from_user.username
     # TODO: Remove mentions from description
@@ -60,7 +69,14 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
         except:
             pass
     debtors = parse_mentions(update.message)
-    response = debts_manager.lend(lender, debtors, name, total, self_except=True)
+    response = debts_manager.lend(
+        lender, debtors, name, total,
+        self_except=True,
+        group_type=update.effective_chat.type,
+        chat_id=update.effective_chat.id,
+        message_id=update.effective_message.message_id,
+    )
+
     buttons = [[
         telegram.InlineKeyboardButton("⛔️", callback_data="delete"),
     ]]

@@ -11,7 +11,17 @@ class DebtsManager:
         self.engine = create_engine(database_url, echo=debug)
         Base.metadata.create_all(self.engine)
 
-    def lend(self, lender, debtors, name, total, self_except=False):
+    def lend(
+            self,
+            lender,
+            debtors,
+            name,
+            total,
+            self_except=False,
+            group_type: str = None,
+            chat_id: str = None,
+            message_id: str = None,
+    ):
         result = []
         if not self_except:
             debtors.append(lender)
@@ -19,7 +29,12 @@ class DebtsManager:
         interim_amount = total / len(debtors) if len(debtors) else total
         session = Session(bind=self.engine)
         for debtor in debtors:
-            debt = Debt(lender, debtor, name, total, interim_amount)
+            debt = Debt(
+                lender, debtor, name, total, interim_amount,
+                group_type=group_type,
+                chat_id=chat_id,
+                message_id=message_id,
+            )
             session.add(debt)
             if not debt.lender == debt.debtor:
                 result.append(debt)
