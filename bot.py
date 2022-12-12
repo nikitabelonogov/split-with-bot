@@ -50,6 +50,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
     # TODO: Add interactive lend
     args = context.args
     lender = '@' + update.message.from_user.username
+    # TODO: Remove mentions from description
     name = ' '.join(args)
     for arg in args:
         try:

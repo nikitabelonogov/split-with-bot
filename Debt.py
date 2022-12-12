@@ -9,6 +9,7 @@ Base = declarative_base()
 
 class Debt(Base):
     __tablename__ = 'debts'
+    # TODO: Add chat and message id
     id = Column(Integer, primary_key=True)
     lender = Column(String)
     debtor = Column(String)
