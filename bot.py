@@ -12,6 +12,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+# TODO: integrate logger
 
 def parse_mentions(message) -> list[str]:
     result = []
