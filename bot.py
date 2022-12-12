@@ -46,6 +46,7 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
     )
 
 
+# TODO: merge lend and split commands
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     # TODO: Add interactive lend
     args = context.args
@@ -54,6 +55,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
     name = ' '.join(args)
     for arg in args:
         try:
+            # TODO: parse cents 3.30
             total = float(arg)
         except:
             pass
