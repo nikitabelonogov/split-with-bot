@@ -103,19 +103,20 @@ def generate_history_message(
         result += '\n'.join(map(str, page))
         result += f'<i>\n{str(f)}..{str(t)}/{str(len(response))}</i>'
     buttons_raw = []
-    if f != 0 and t != HISTORY_PAGE_SIZE:
+    if f > 0:
         buttons_raw.append(
             telegram.InlineKeyboardButton(
                 "First Page",
                 callback_data=f"history-{str(0)}-{str(10)}"
             )
         )
-    buttons_raw.append(
-        telegram.InlineKeyboardButton(
-            "Next Page",
-            callback_data=f"history-{str(f + HISTORY_PAGE_SIZE)}-{str(t + HISTORY_PAGE_SIZE)}"
+    if t < len(response):
+        buttons_raw.append(
+            telegram.InlineKeyboardButton(
+                "Next Page",
+                callback_data=f"history-{str(f + HISTORY_PAGE_SIZE)}-{str(t + HISTORY_PAGE_SIZE)}"
+            )
         )
-    )
     buttons = [buttons_raw]
 
     return result, telegram.InlineKeyboardMarkup(buttons)
