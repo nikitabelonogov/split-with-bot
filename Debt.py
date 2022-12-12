@@ -31,6 +31,7 @@ class Debt(Base):
         self.interim_amount = float(interim_amount)
 
     def __str__(self):
+        # TODO: Add message link on date if its possible
         return '{} {} lent {} {:.0f}{} for {:.0f}{} {}'.format(
             self.datetime.date(),
             self.lender,
