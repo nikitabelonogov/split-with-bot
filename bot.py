@@ -70,13 +70,14 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
     username = '@' + update.message.from_user.username
     if args:
         username2 = args[0]
-        message_text, reply_markup = generate_history_message(username, username2)
+        message_text, reply_markup = generate_history_message([username, username2])
     else:
-        message_text, reply_markup = generate_history_message(username)
+        message_text, reply_markup = generate_history_message([username])
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=message_text,
         reply_markup=reply_markup,
+        parse_mode='html',
     )
 
 
@@ -84,20 +85,17 @@ HISTORY_PAGE_SIZE = 10
 
 
 def generate_history_message(
-        username1: str,
-        username2: str = None,
+        usernames: list[str],
         f: int = 0,
         t: int = HISTORY_PAGE_SIZE,
 ) -> (str, telegram.InlineKeyboardMarkup):
-    if username2:
-        response = debts_manager.related_debts(username1, username2)
-    else:
-        response = debts_manager.related_debts(username1)
+    response = debts_manager.related_debts(usernames)
     result = 'No entries found'
     if response:
         page = response[f:t]
-        result = '\n'.join(map(str, page))
-        result += f'\n{str(f)}..{str(t)}/{str(len(response))}'
+        result = f'<i>history for {", ".join(usernames)}</i>\n'
+        result += '\n'.join(map(str, page))
+        result += f'<i>\n{str(f)}..{str(t)}/{str(len(response))}</i>'
     buttons_raw = []
     if f != 0 and t != HISTORY_PAGE_SIZE:
         buttons_raw.append(
@@ -122,9 +120,9 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
     username = '@' + update.message.from_user.username
     if args:
         username2 = args[0]
-        debts = debts_manager.related_debts(username, username2)
+        debts = debts_manager.related_debts([username, username2])
     else:
-        debts = debts_manager.related_debts(username)
+        debts = debts_manager.related_debts([username])
     totals = {}
     for debt in debts:
         if debt.lender == username:
@@ -180,13 +178,15 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
     elif query.startswith('history'):
         username = '@' + update.callback_query.from_user.username
-        c, f, t = query.split('-')
-        message_text, reply_markup = generate_history_message(username, f=int(f), t=int(t))
+        _, f, t = query.split('-')
+        # TODO: use origin user's history
+        message_text, reply_markup = generate_history_message([username], f=int(f), t=int(t))
         context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=message.message_id,
             text=message_text,
             reply_markup=reply_markup,
+            parse_mode='html',
         )
     else:
         context.bot.send_message(
@@ -209,12 +209,12 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
-    dispatcher.add_handler(CallbackQueryHandler(queryHandler))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
-    dispatcher.add_handler(CommandHandler('status', status_command))
+    dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('start', start_command))
     dispatcher.add_handler(CommandHandler('help', help_command))
+    dispatcher.add_handler(CallbackQueryHandler(queryHandler))
     dispatcher.add_error_handler(error_callback)
 
     if MODE.lower() == 'webhook':

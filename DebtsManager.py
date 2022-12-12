@@ -28,21 +28,13 @@ class DebtsManager:
         # session.close()
         return result
 
-    def related_debts(self, username1, username2=None):
+    def related_debts(self, usernames: list[str]):
         session = Session(bind=self.engine)
-        if username2:
-            return session.query(Debt). \
-                filter(Debt.lender != Debt.debtor). \
-                filter(Debt.active). \
-                filter(or_(and_(Debt.lender == username1, Debt.debtor == username2),
-                           and_(Debt.lender == username2, Debt.debtor == username1))). \
-                all()
-        else:
-            return session.query(Debt). \
-                filter(Debt.lender != Debt.debtor). \
-                filter(Debt.active). \
-                filter(or_(Debt.lender == username1, Debt.debtor == username1)). \
-                all()
+        return session.query(Debt). \
+            filter(Debt.lender != Debt.debtor). \
+            filter(Debt.active). \
+            filter(or_(Debt.lender.in_(usernames), Debt.debtor.in_(usernames))). \
+            all()
 
     def delete(self, username1, username2=None):
         session = Session(bind=self.engine)
