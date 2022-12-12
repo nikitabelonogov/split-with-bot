@@ -56,7 +56,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
     debtors = parse_mentions(update.message)
     response = debts_manager.lend(lender, debtors, name, total, self_except=True)
     buttons = [[
-        telegram.InlineKeyboardButton("⛔️", callback_data="callback"),
+        telegram.InlineKeyboardButton("⛔️", callback_data="delete"),
     ]]
     context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -70,10 +70,51 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
     username = '@' + update.message.from_user.username
     if args:
         username2 = args[0]
-        response = debts_manager.related_debts(username, username2)
+        message_text, reply_markup = generate_history_message(username, username2)
     else:
-        response = debts_manager.related_debts(username)
-    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
+        message_text, reply_markup = generate_history_message(username)
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=message_text,
+        reply_markup=reply_markup,
+    )
+
+
+HISTORY_PAGE_SIZE = 10
+
+
+def generate_history_message(
+        username1: str,
+        username2: str = None,
+        f: int = 0,
+        t: int = HISTORY_PAGE_SIZE,
+) -> (str, telegram.InlineKeyboardMarkup):
+    if username2:
+        response = debts_manager.related_debts(username1, username2)
+    else:
+        response = debts_manager.related_debts(username1)
+    result = 'No entries found'
+    if response:
+        page = response[f:t]
+        result = '\n'.join(map(str, page))
+        result += f'\n{str(f)}..{str(t)}/{str(len(response))}'
+    buttons_raw = []
+    if f != 0 and t != HISTORY_PAGE_SIZE:
+        buttons_raw.append(
+            telegram.InlineKeyboardButton(
+                "First Page",
+                callback_data=f"history-{str(0)}-{str(10)}"
+            )
+        )
+    buttons_raw.append(
+        telegram.InlineKeyboardButton(
+            "Next Page",
+            callback_data=f"history-{str(f + HISTORY_PAGE_SIZE)}-{str(t + HISTORY_PAGE_SIZE)}"
+        )
+    )
+    buttons = [buttons_raw]
+
+    return result, telegram.InlineKeyboardMarkup(buttons)
 
 
 def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -131,7 +172,27 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
     query = update.callback_query.data
     message = update.callback_query.message
     update.callback_query.answer()
-    context.bot.delete_message(chat_id=message.chat_id, message_id=message.message_id)
+
+    if query == 'delete':
+        context.bot.delete_message(
+            chat_id=message.chat_id,
+            message_id=message.message_id,
+        )
+    elif query.startswith('history'):
+        username = '@' + update.callback_query.from_user.username
+        c, f, t = query.split('-')
+        message_text, reply_markup = generate_history_message(username, f=int(f), t=int(t))
+        context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=message.message_id,
+            text=message_text,
+            reply_markup=reply_markup,
+        )
+    else:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'Unknown query "{query}"',
+        )
 
 
 if __name__ == '__main__':
