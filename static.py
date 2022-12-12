@@ -13,3 +13,4 @@ start_message = \
     """
 This telegram bot helps you to split a receipts with your friends.
 """
+currency_char = "🪙"

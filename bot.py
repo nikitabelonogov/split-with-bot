@@ -138,9 +138,9 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
     response = []
     for username, total in totals.items():
         if total <= -1.:
-            response.append('you owes {} {:.0f}₽ in total'.format(username, -total))
+            response.append('you owes {} {:.0f}{} in total'.format(username, -total, static.currency_char))
         elif total >= 1.:
-            response.append('you lent {} {:.0f}₽ in total'.format(username, total))
+            response.append('you lent {} {:.0f}{} in total'.format(username, total, static.currency_char))
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 

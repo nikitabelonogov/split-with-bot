@@ -4,6 +4,8 @@ from typing import Any
 from sqlalchemy import Integer, Column, String, Float, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 
+import static
+
 Base = declarative_base()
 
 
@@ -29,8 +31,16 @@ class Debt(Base):
         self.interim_amount = float(interim_amount)
 
     def __str__(self):
-        return '{} {} lent {} {:.0f}₽ for {:.0f}₽ {}'.format(
-            self.datetime.date(), self.lender, self.debtor, self.interim_amount, self.total, self.name)
+        return '{} {} lent {} {:.0f}{} for {:.0f}{} {}'.format(
+            self.datetime.date(),
+            self.lender,
+            self.debtor,
+            self.interim_amount,
+            static.currency_char,
+            self.total,
+            static.currency_char,
+            self.name,
+        )
 
     def __float__(self):
         return self.interim_amount
