@@ -78,29 +78,40 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
     lender = '@' + update.message.from_user.username
     # TODO: Remove mentions from description
     name = ' '.join(args)
+    total = .0
     for arg in args:
         try:
             # TODO: parse cents 3.30
             total = float(arg)
-        except:
-            pass
-    debtors = parse_mentions(update.message)
-    response = debts_manager.lend(
-        lender, debtors, name, total,
-        self_except=True,
-        group_type=update.effective_chat.type,
-        chat_id=update.effective_chat.id,
-        message_id=update.effective_message.message_id,
-    )
+        except Exception as e:
+            print(e)
 
-    buttons = [[
-        telegram.InlineKeyboardButton("⛔️", callback_data="delete"),
-    ]]
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text='\n'.join(map(str, response)) or 'No entries found',
-        reply_markup=telegram.InlineKeyboardMarkup(buttons),
-    )
+    debtors = parse_mentions(update.message)
+    response = []
+    try:
+        response = debts_manager.lend(
+            lender, debtors, name, total,
+            self_except=True,
+            group_type=update.effective_chat.type,
+            chat_id=update.effective_chat.id,
+            message_id=update.effective_message.message_id,
+        )
+    except Exception as e:
+        print(e)
+
+    if response:
+        try:
+            buttons = [[
+                telegram.InlineKeyboardButton("-", callback_data="remove_ms"),
+                telegram.InlineKeyboardButton("+", callback_data="add_ms"),
+            ]]
+            context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text='\n'.join(map(str, response)) or 'No entries found',
+                reply_markup=telegram.InlineKeyboardMarkup(buttons),
+            )
+        except Exception as e:
+            print(e)
 
 
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):

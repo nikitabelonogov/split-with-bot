@@ -13,24 +13,29 @@ class DebtsManager:
 
     def lend(
             self,
-            lender,
-            debtors,
-            name,
-            total,
+            lender: str,
+            debtors: list[str],
+            name: str,
+            total: float,
             self_except=False,
             group_type: str = None,
             chat_id: str = None,
             message_id: str = None,
-    ):
+    ) -> list[Debt]:
         result = []
         if not self_except:
             debtors.append(lender)
         debtors = set(debtors)
         interim_amount = total / len(debtors) if len(debtors) else total
         session = Session(bind=self.engine)
+        session.expire_on_commit = False
         for debtor in debtors:
             debt = Debt(
-                lender, debtor, name, total, interim_amount,
+                lender=lender,
+                debtor=debtor,
+                name=name,
+                total=total,
+                interim_amount=interim_amount,
                 group_type=group_type,
                 chat_id=chat_id,
                 message_id=message_id,

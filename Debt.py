@@ -24,19 +24,19 @@ class Debt(Base):
     chat_id = Column(String)
     message_id = Column(String)
 
-
     def __init__(
             self,
-            lender,
-            debtor,
-            name,
-            total,
-            interim_amount,
+            lender: str,
+            debtor: str,
+            name: str,
+            total: float,
+            interim_amount: float,
             group_type: str = None,
             chat_id: str = None,
             message_id: str = None,
             *args: Any,
-            **kwargs: Any):
+            **kwargs: Any
+    ):
         super().__init__(*args, **kwargs)
         self.lender = lender
         self.debtor = debtor
