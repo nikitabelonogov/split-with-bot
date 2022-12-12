@@ -22,6 +22,7 @@ def parse_mentions(message) -> list[str]:
 
 
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    # TODO: Add interactive split
     args = context.args
     lender = '@' + update.message.from_user.username
     name = ' '.join(args)
@@ -45,6 +46,7 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
 
 
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    # TODO: Add interactive lend
     args = context.args
     lender = '@' + update.message.from_user.username
     name = ' '.join(args)
