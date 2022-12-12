@@ -28,6 +28,15 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
     args = context.args
     lender = '@' + update.message.from_user.username
     name = ' '.join(args)
+
+    if not args:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=static.args_missing_example_message,
+            parse_mode='html',
+        )
+        return
+
     for arg in args:
         try:
             total = float(arg)
@@ -56,9 +65,16 @@ def split_command(update: telegram.Update, context: telegram.ext.CallbackContext
 # TODO: merge lend and split commands
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     # TODO: Add interactive lend
-    print(update)
-    print(context)
     args = context.args
+
+    if not args:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=static.args_missing_example_message,
+            parse_mode='html',
+        )
+        return
+
     lender = '@' + update.message.from_user.username
     # TODO: Remove mentions from description
     name = ' '.join(args)

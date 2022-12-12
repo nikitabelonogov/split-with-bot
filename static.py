@@ -14,3 +14,8 @@ start_message = \
 This telegram bot helps you to split a receipts with your friends.
 """
 currency_char = "🪙"
+args_missing_example_message = \
+    """
+args are missing 😞
+example: <code>/lend hookah 700 @test</code>
+"""
