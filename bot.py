@@ -12,6 +12,8 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+HISTORY_PAGE_SIZE = 10
+
 
 # TODO: integrate logger
 
@@ -75,9 +77,8 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
         return
 
-    lender = '@' + update.message.from_user.username
-    # TODO: Remove mentions from description
-    name = ' '.join(args)
+    lenders = ['@' + update.message.from_user.username]
+
     total = .0
     for arg in args:
         try:
@@ -87,31 +88,26 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
             print(e)
 
     debtors = parse_mentions(update.message)
-    response = []
-    try:
-        response = debts_manager.lend(
-            lender, debtors, name, total,
-            self_except=True,
-            group_type=update.effective_chat.type,
-            chat_id=update.effective_chat.id,
-            message_id=update.effective_message.message_id,
-        )
-    except Exception as e:
-        print(e)
+    debt = debts_manager.lend(
+        total=total,
+        lenders_nicknames=lenders,
+        debtors_nicknames=debtors,
+        # TODO: Remove mentions from description
+        description=' '.join(args),
+        group_type=update.effective_chat.type,
+        chat_id=update.effective_chat.id,
+        message_id=update.effective_message.message_id,
+    )
 
-    if response:
-        try:
-            buttons = [[
-                telegram.InlineKeyboardButton("-", callback_data="remove_ms"),
-                telegram.InlineKeyboardButton("+", callback_data="add_ms"),
-            ]]
-            context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text='\n'.join(map(str, response)) or 'No entries found',
-                reply_markup=telegram.InlineKeyboardMarkup(buttons),
-            )
-        except Exception as e:
-            print(e)
+    buttons = [[
+        telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
+        telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),
+    ]]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=debt.telegram_html_message(),
+        reply_markup=telegram.InlineKeyboardMarkup(buttons),
+    )
 
 
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -128,9 +124,6 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
         reply_markup=reply_markup,
         parse_mode='html',
     )
-
-
-HISTORY_PAGE_SIZE = 10
 
 
 def generate_history_message(
@@ -220,6 +213,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
     query = update.callback_query.data
     message = update.callback_query.message
     update.callback_query.answer()
+    username = '@' + update.callback_query.from_user.username
 
     if query == 'delete':
         context.bot.delete_message(
@@ -227,7 +221,6 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
             message_id=message.message_id,
         )
     elif query.startswith('history'):
-        username = '@' + update.callback_query.from_user.username
         _, f, t = query.split('-')
         # TODO: use origin user's history
         message_text, reply_markup = generate_history_message([username], f=int(f), t=int(t))
@@ -236,6 +229,35 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
             message_id=message.message_id,
             text=message_text,
             reply_markup=reply_markup,
+            parse_mode='html',
+        )
+    elif query.startswith('remove-from-debt'):
+        debt_id = int(query.split('-')[-1])
+        debt = debts_manager.getDebtByID(debt_id)
+        buttons = [[
+            telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
+            telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),
+        ]]
+        context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=message.message_id,
+            text=debt.telegram_html_message(),
+            reply_markup=telegram.InlineKeyboardMarkup(buttons),
+            parse_mode='html',
+        )
+    elif query.startswith('add-to-debt'):
+        debt_id = int(query.split('-')[-1])
+        debt = debts_manager.getDebtByID(debt_id)
+        debt.add_debtors([debts_manager.get_or_create_user(nickname=username)])
+        buttons = [[
+            telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
+            telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),
+        ]]
+        context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=message.message_id,
+            text=debt.telegram_html_message(),
+            reply_markup=telegram.InlineKeyboardMarkup(buttons),
             parse_mode='html',
         )
     else:
