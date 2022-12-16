@@ -127,12 +127,6 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
     username = '@' + update.message.from_user.username
     totals = {}
     user = debts_manager.get_or_create_user(username)
-    print('user:')
-    print(user)
-    print('debts')
-    print('\n'.join(map(str, user.debts)))
-    print('lends:')
-    print('\n'.join(map(str, user.lends)))
     debts = debts_manager.related_debts(username)
     for debt in debts:
         for debtor in debt.debtors:
@@ -141,7 +135,6 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
         for lender in debt.lenders:
             if user in debt.debtors:
                 totals[lender.nickname] = totals.get(lender.nickname, 0.) - debt.fraction()
-    print(totals)
     response = []
     for nickname, total in totals.items():
         if total <= -1.:
