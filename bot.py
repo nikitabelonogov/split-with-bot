@@ -204,8 +204,14 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         debt_id = int(query.split('-')[-1])
         debt = debts_manager.remove_debtor(debt_id, username)
         buttons = [[
-            telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
-            telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),
+            telegram.InlineKeyboardButton(
+                static.debt_button_remove_myself_from_debtors_text,
+                callback_data=f"remove-from-debt-{str(debt.id)}",
+            ),
+            telegram.InlineKeyboardButton(
+                static.debt_button_add_myself_to_debtors_text,
+                callback_data=f"add-to-debt-{str(debt.id)}",
+            ),
         ]]
         context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
