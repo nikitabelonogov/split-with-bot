@@ -241,7 +241,7 @@ if __name__ == '__main__':
     MODE = os.environ.get('MODE', "")
     URL = os.environ.get('URL')
     PORT = os.environ.get('PORT', 80)
-    DATABASE_URL = os.environ.get('DATABASE_URL')
+    DATABASE_URL = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://")
     DEBUG = bool(os.environ.get('DEBUG'))
 
     debts_manager = DebtsManager(DATABASE_URL, DEBUG)
