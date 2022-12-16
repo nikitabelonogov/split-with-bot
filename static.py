@@ -1,12 +1,11 @@
 help_message = \
     """
 <code>
-split     /split [name] [sum] [username...]   lend a split check between users and you
-lend      /lend  [name] [sum] [username...]   lend a split check between users
-history   /history [username]                 show history of debts 
-status    /status [username]                  show totals
-delete    /delete [username...]               delete history
-help      /help                               show help message
+split     /split [description] [sum] [username...] lend a split check between users and you
+lend      /lend  [description] [sum] [username...] lend a split check between users
+history   /history                                 show history of debts 
+status    /status                                  show totals
+help      /help                                    show help message
 </code>
 """
 start_message = \
