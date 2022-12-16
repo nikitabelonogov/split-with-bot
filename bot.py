@@ -162,7 +162,7 @@ def delete_command(update: telegram.Update, context: telegram.ext.CallbackContex
 
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
-    update.message.reply_text(static.start_message)
+    update.message.reply_text(static.start_message, parse_mode='html')
 
 
 def help_command(update: telegram.Update, context: telegram.ext.CallbackContext):
