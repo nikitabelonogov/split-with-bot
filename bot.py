@@ -238,7 +238,7 @@ if __name__ == '__main__':
     DEBUG = bool(os.environ.get('DEBUG'))
 
     debts_manager = DebtsManager(DATABASE_URL, DEBUG)
-    updater = Updater(TOKEN)
+    updater = Updater(TOKEN, use_context=True)
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
@@ -252,8 +252,7 @@ if __name__ == '__main__':
     dispatcher.add_error_handler(error_callback)
 
     if MODE.lower() == 'webhook':
-        updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN)
-        updater.bot.setWebhook(URL + '/' + TOKEN)
+        updater.start_webhook(listen='0.0.0.0', port=int(PORT), url_path=TOKEN, webhook_url=URL + '/' + TOKEN)
         updater.idle()
     elif MODE.lower() == 'polling':
         updater.start_polling()
