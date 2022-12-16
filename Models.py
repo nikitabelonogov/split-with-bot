@@ -121,7 +121,7 @@ class Debt(Base):
         debtors_text = 'no debtors'
         if len(self.debtors) == 1:
             debtors_text = f'to {mentions(self.debtors)}'
-        if len(self.debtors) >= 0:
+        elif len(self.debtors) > 1:
             debtors_text = f'split between: {mentions(self.debtors)} ({self.fraction()}{static.currency_char})'
         return " ".join(map(str, [
             self.date_with_link_html(),
