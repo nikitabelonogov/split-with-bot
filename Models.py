@@ -88,16 +88,7 @@ class Debt(Base):
         self.active = active
 
     def __str__(self):
-        return '{} {} lent {} {:.0f}{} for {:.0f}{} {}'.format(
-            self.date_with_link_html(),
-            self.lender,
-            self.debtor,
-            self.interim_amount,
-            static.currency_char,
-            self.total,
-            static.currency_char,
-            self.name,
-        )
+        return self.telegram_html_message()
 
     def add_lenders(self, lenders: list[User] = None):
         if lenders:
@@ -128,17 +119,13 @@ class Debt(Base):
 
     def telegram_html_message(self) -> str:
         split_amount = self.total / len(self.debtors)
-        lines = []
-        lines.append(
-            " ".join(map(str, [
-                self.date_with_link_html(),
-                mentions(self.lenders),
-                self.description,
-                self.total_formated(),
-            ]))
-        )
-        lines.append(f'split between: {mentions(self.debtors)} ({split_amount}{static.currency_char})')
-        return '\n'.join(lines)
+        return " ".join(map(str, [
+            self.date_with_link_html(),
+            mentions(self.lenders),
+            self.description,
+            self.total_formated(),
+            f'split between: {mentions(self.debtors)} ({split_amount}{static.currency_char})'
+        ]))
 
     def __float__(self):
         return self.total

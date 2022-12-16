@@ -81,11 +81,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
-    if args:
-        username2 = args[0]
-        message_text, reply_markup = generate_history_message([username, username2])
-    else:
-        message_text, reply_markup = generate_history_message([username])
+    message_text, reply_markup = generate_history_message(username)
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=message_text,
@@ -95,17 +91,17 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
 
 
 def generate_history_message(
-        usernames: list[str],
+        username: str,
         f: int = 0,
         t: int = HISTORY_PAGE_SIZE,
 ) -> (str, telegram.InlineKeyboardMarkup):
-    response = debts_manager.related_debts(usernames)
+    debts = debts_manager.related_debts(username)
     result = 'No entries found'
-    if response:
-        page = response[f:t]
-        result = f'<i>history for {", ".join(usernames)}</i>\n'
+    if debts:
+        page = debts[f:t]
+        result = f'<i>history for {username}</i>\n'
         result += '\n'.join(map(str, page))
-        result += f'<i>\n{str(f)}..{str(t)}/{str(len(response))}</i>'
+        result += f'<i>\n{str(f)}..{str(t)}/{str(len(debts))}</i>'
     buttons_raw = []
     if f > 0:
         buttons_raw.append(
@@ -114,7 +110,7 @@ def generate_history_message(
                 callback_data=f"history-{str(0)}-{str(10)}"
             )
         )
-    if t < len(response):
+    if t < len(debts):
         buttons_raw.append(
             telegram.InlineKeyboardButton(
                 "Next Page",
@@ -129,11 +125,7 @@ def generate_history_message(
 def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
-    if args:
-        username2 = args[0]
-        debts = debts_manager.related_debts([username, username2])
-    else:
-        debts = debts_manager.related_debts([username])
+    debts = debts_manager.related_debts(username)
     totals = {}
     for debt in debts:
         if debt.lender == username:
@@ -191,7 +183,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
     elif query.startswith('history'):
         _, f, t = query.split('-')
         # TODO: use origin user's history
-        message_text, reply_markup = generate_history_message([username], f=int(f), t=int(t))
+        message_text, reply_markup = generate_history_message(username, f=int(f), t=int(t))
         context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=message.message_id,

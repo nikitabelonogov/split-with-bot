@@ -55,14 +55,10 @@ class DebtsManager:
         self.session.commit()
         return self.getDebtByID(debt.id)
 
-    # def related_debts(self, usernames: list[str]):
-    #     session = Session(bind=self.engine)
-    #     return session.query(Debt). \
-    #         filter(Debt.lender != Debt.debtor). \
-    #         filter(Debt.active). \
-    #         filter(or_(Debt.lender.in_(usernames), Debt.debtor.in_(usernames))). \
-    #         all()
-    #
+    def related_debts(self, username: str) -> list[Debt]:
+        user = self.get_or_create_user(username)
+        return list(set(user.debts + user.lends))
+
     # def delete(self, username1, username2=None):
     #     session = Session(bind=self.engine)
     #     if username2:
@@ -79,6 +75,7 @@ class DebtsManager:
     #             filter(or_(Debt.lender == username1, Debt.debtor == username1)). \
     #             delete(synchronize_session='fetch')
     #     session.commit()
+
     def getDebtByID(self, debt_id: int) -> Debt:
         return self.session.query(Debt).get(debt_id)
 
