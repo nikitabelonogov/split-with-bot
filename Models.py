@@ -83,7 +83,7 @@ class Debt(Base):
         self.description = description
         self.total = total
         self.group_type = group_type
-        self.chat_id = chat_id
+        self.chat_id = str(chat_id)
         self.message_id = message_id
         self.active = active
 

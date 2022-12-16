@@ -19,9 +19,14 @@ HISTORY_PAGE_SIZE = 10
 
 def parse_mentions(message: telegram.Message) -> list[str]:
     result = []
-    mentions = [x for x in message['entities'] if x['type'] == 'mention']
-    for mention in mentions:
-        result.append(message['text'][mention['offset']:mention['offset'] + mention['length']])
+    for entity in message.entities:
+        if entity.type == telegram.MessageEntity.MENTION:
+            username = message.text[entity.offset:entity.offset + entity.length]
+            result.append(username)
+        elif entity.type == telegram.MessageEntity.TEXT_MENTION:
+            result.append(str(entity.user.id))
+        else:
+            pass
     return result
 
 
@@ -81,6 +86,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
         chat_id=update.effective_chat.id,
         text=debt.telegram_html_message(),
         reply_markup=telegram.InlineKeyboardMarkup(buttons),
+        parse_mode='html',
     )
 
 
@@ -108,6 +114,7 @@ def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext)
         chat_id=update.effective_chat.id,
         text=debt.telegram_html_message(),
         reply_markup=telegram.InlineKeyboardMarkup(buttons),
+        parse_mode='html',
     )
 
 
