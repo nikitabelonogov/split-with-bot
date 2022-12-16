@@ -17,7 +17,7 @@ HISTORY_PAGE_SIZE = 10
 
 # TODO: integrate logger
 
-def parse_mentions(message) -> list[str]:
+def parse_mentions(message: telegram.Message) -> list[str]:
     result = []
     mentions = [x for x in message['entities'] if x['type'] == 'mention']
     for mention in mentions:
@@ -26,46 +26,10 @@ def parse_mentions(message) -> list[str]:
 
 
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    # TODO: Add interactive split
-    args = context.args
-    lender = '@' + update.message.from_user.username
-    name = ' '.join(args)
-
-    if not args:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=static.args_missing_example_message,
-            parse_mode='html',
-        )
-        return
-
-    for arg in args:
-        try:
-            total = float(arg)
-        except:
-            pass
-    debtors = parse_mentions(update.message)
-    debtors.append(lender)
-    debtors = list(set(debtors))
-    response = debts_manager.lend(
-        lender, debtors, name, total,
-        self_except=True,
-        group_type=update.effective_chat.type,
-        chat_id=update.effective_chat.id,
-        message_id=update.effective_message.message_id,
-    )
-    buttons = [[
-        telegram.InlineKeyboardButton("⛔️", callback_data="callback"),
-    ]]
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text='\n'.join(map(str, response)) or 'No entries found',
-        reply_markup=telegram.InlineKeyboardMarkup(buttons),
-    )
+    lend_command(update, context, split=True)
 
 
-# TODO: merge lend and split commands
-def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext, split: bool = False):
     # TODO: Add interactive lend
     args = context.args
 
@@ -77,7 +41,8 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
         return
 
-    lenders = ['@' + update.message.from_user.username]
+    lender = '@' + update.message.from_user.username
+    lenders = [lender]
 
     total = .0
     for arg in args:
@@ -88,6 +53,9 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext)
             print(e)
 
     debtors = parse_mentions(update.message)
+    if split:
+        debtors.append(lender)
+    debtors = list(set(debtors))
     debt = debts_manager.lend(
         total=total,
         lenders_nicknames=lenders,
@@ -233,7 +201,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
     elif query.startswith('remove-from-debt'):
         debt_id = int(query.split('-')[-1])
-        debt = debts_manager.getDebtByID(debt_id)
+        debt = debts_manager.remove_debtor(debt_id, username)
         buttons = [[
             telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
             telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),
@@ -247,8 +215,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
     elif query.startswith('add-to-debt'):
         debt_id = int(query.split('-')[-1])
-        debt = debts_manager.getDebtByID(debt_id)
-        debt.add_debtors([debts_manager.get_or_create_user(nickname=username)])
+        debt = debts_manager.add_debtor(debt_id, username)
         buttons = [[
             telegram.InlineKeyboardButton("-", callback_data=f"remove-from-debt-{str(debt.id)}"),
             telegram.InlineKeyboardButton("+", callback_data=f"add-to-debt-{str(debt.id)}"),

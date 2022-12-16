@@ -53,7 +53,7 @@ class DebtsManager:
 
         self.session.add(debt)
         self.session.commit()
-        return debt
+        return self.getDebtByID(debt.id)
 
     # def related_debts(self, usernames: list[str]):
     #     session = Session(bind=self.engine)
@@ -81,3 +81,21 @@ class DebtsManager:
     #     session.commit()
     def getDebtByID(self, debt_id: int) -> Debt:
         return self.session.query(Debt).get(debt_id)
+
+    def add_debtor(self, debt_id: int, username: str) -> Debt:
+        debt = self.getDebtByID(debt_id)
+        user = self.get_or_create_user(username)
+        self.session.add(user)
+        debt.add_debtors([user])
+        self.session.add(debt)
+        self.session.commit()
+        return self.getDebtByID(debt.id)
+
+    def remove_debtor(self, debt_id: int, username: str) -> Debt:
+        debt = self.getDebtByID(debt_id)
+        user = self.get_or_create_user(username)
+        self.session.add(user)
+        debt.remove_debtors([user])
+        self.session.add(debt)
+        self.session.commit()
+        return self.getDebtByID(debt.id)

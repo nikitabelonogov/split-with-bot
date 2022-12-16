@@ -31,6 +31,8 @@ class User(Base):
     __tablename__ = USER_TABLE_NAME
     id = Column(Integer, primary_key=True)
     nickname = Column(String)
+    lends = relationship("Debt", secondary=lenders_association_table, back_populates="lenders")
+    debts = relationship("Debt", secondary=debtors_association_table, back_populates="debtors")
 
     def __init__(
             self, nickname,
@@ -51,8 +53,8 @@ def mentions(users: list[User]) -> str:
 class Debt(Base):
     __tablename__ = DEBT_TABLE_NAME
     id = Column(Integer, primary_key=True)
-    lenders = relationship("User", secondary=lenders_association_table)
-    debtors = relationship("User", secondary=debtors_association_table)
+    lenders = relationship("User", secondary=lenders_association_table, back_populates="lends")
+    debtors = relationship("User", secondary=debtors_association_table, back_populates="debts")
     description = Column(String)
     # TODO: DO NOT STORE MONEY IN FLOAT!
     total = Column(Float)
@@ -105,8 +107,14 @@ class Debt(Base):
     def add_debtors(self, debtors: list[User] = None):
         if debtors:
             for debtor in debtors:
-                self.debtors.append(debtor)
+                if debtor not in self.debtors:
+                    self.debtors.append(debtor)
 
+    def remove_debtors(self, debtors: list[User] = None):
+        if debtors:
+            for debtor in debtors:
+                if debtor in self.debtors:
+                    self.debtors.remove(debtor)
 
     def date_with_link_html(self) -> str:
         raw_date = str(self.datetime.date())
@@ -115,11 +123,22 @@ class Debt(Base):
         else:
             return raw_date
 
+    def total_formated(self) -> str:
+        return f"{self.total}{static.currency_char}"
+
     def telegram_html_message(self) -> str:
         split_amount = self.total / len(self.debtors)
         lines = []
-        lines.append(f'{self.date_with_link_html()} {mentions(self.lenders)} {self.description} {self.total}{static.currency_char}')
+        lines.append(
+            " ".join(map(str, [
+                self.date_with_link_html(),
+                mentions(self.lenders),
+                self.description,
+                self.total_formated(),
+            ]))
+        )
         lines.append(f'split between: {mentions(self.debtors)} ({split_amount}{static.currency_char})')
         return '\n'.join(lines)
+
     def __float__(self):
         return self.total
