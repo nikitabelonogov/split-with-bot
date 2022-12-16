@@ -36,7 +36,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
     if not args:
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=static.args_missing_example_message,
+            text=static.lend_command_args_missing_message,
             parse_mode='html',
         )
         return
@@ -82,6 +82,35 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
         text=debt.telegram_html_message(),
         reply_markup=telegram.InlineKeyboardMarkup(buttons),
     )
+
+
+def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    args = context.args
+    if not args:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=static.debt_command_args_missing_message,
+            parse_mode='html',
+        )
+        return
+    debt = debts_manager.getDebtByID(int(args[0]))
+    buttons = [[
+        telegram.InlineKeyboardButton(
+            static.debt_button_remove_myself_from_debtors_text,
+            callback_data=f"remove-from-debt-{str(debt.id)}",
+        ),
+        telegram.InlineKeyboardButton(
+            static.debt_button_add_myself_to_debtors_text,
+            callback_data=f"add-to-debt-{str(debt.id)}",
+        ),
+    ]]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=debt.telegram_html_message(),
+        reply_markup=telegram.InlineKeyboardMarkup(buttons),
+    )
+
+
 
 
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -261,6 +290,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('debt', debt_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
     # dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))

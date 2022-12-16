@@ -125,6 +125,7 @@ class Debt(Base):
             debtors_text = f'split between: {mentions(self.debtors)} ({self.fraction()}{static.currency_char})'
         return " ".join(map(str, [
             self.date_with_link_html(),
+            self.id,
             mentions(self.lenders),
             self.description,
             self.total_formated(),
