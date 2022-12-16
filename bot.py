@@ -125,31 +125,41 @@ def generate_history_message(
 def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     username = '@' + update.message.from_user.username
-    debts = debts_manager.related_debts(username)
     totals = {}
+    user = debts_manager.get_or_create_user(username)
+    print('user:')
+    print(user)
+    print('debts')
+    print('\n'.join(map(str, user.debts)))
+    print('lends:')
+    print('\n'.join(map(str, user.lends)))
+    debts = debts_manager.related_debts(username)
     for debt in debts:
-        if debt.lender == username:
-            totals[debt.debtor] = totals.get(debt.debtor, 0.) + float(debt)
-        elif debt.debtor == username:
-            totals[debt.lender] = totals.get(debt.lender, 0.) - float(debt)
+        for debtor in debt.debtors:
+            if user in debt.lenders:
+                totals[debtor.nickname] = totals.get(debtor.nickname, 0.) + debt.fraction()
+        for lender in debt.lenders:
+            if user in debt.debtors:
+                totals[lender.nickname] = totals.get(lender.nickname, 0.) - debt.fraction()
+    print(totals)
     response = []
-    for username, total in totals.items():
+    for nickname, total in totals.items():
         if total <= -1.:
-            response.append('you owes {} {:.0f}{} in total'.format(username, -total, static.currency_char))
+            response.append(f'{username} owes {nickname} {-total}{static.currency_char} in total')
         elif total >= 1.:
-            response.append('you lent {} {:.0f}{} in total'.format(username, total, static.currency_char))
+            response.append(f'{username} lent {nickname} {total}{static.currency_char} in total')
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
 
 
-def delete_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    args = context.args
-    username = '@' + update.message.from_user.username
-    if args:
-        for username2 in args:
-            debts_manager.delete(username, username2)
-        update.message.reply_text('Deleted')
-    else:
-        update.message.reply_text('No username specified')
+# def delete_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+#     args = context.args
+#     username = '@' + update.message.from_user.username
+#     if args:
+#         for username2 in args:
+#             debts_manager.delete(username, username2)
+#         update.message.reply_text('Deleted')
+#     else:
+#         update.message.reply_text('No username specified')
 
 
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -242,7 +252,7 @@ if __name__ == '__main__':
     dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
-    dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
+    # dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('start', start_command))
     dispatcher.add_handler(CommandHandler('help', help_command))
     dispatcher.add_handler(CallbackQueryHandler(queryHandler))

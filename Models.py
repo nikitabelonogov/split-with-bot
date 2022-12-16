@@ -127,5 +127,8 @@ class Debt(Base):
             f'split between: {mentions(self.debtors)} ({split_amount}{static.currency_char})'
         ]))
 
+    def fraction(self) -> float:
+        return self.total / len(self.debtors) / len(self.lenders)
+
     def __float__(self):
         return self.total
