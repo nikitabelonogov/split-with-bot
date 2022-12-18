@@ -199,15 +199,15 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
 
 
 def generate_history_message(
-        username: User,
+        actor: User,
         f: int = 0,
         t: int = HISTORY_PAGE_SIZE,
 ) -> (str, telegram.InlineKeyboardMarkup):
-    debts = debts_manager.related_debts(username)
+    debts = debts_manager.related_debts(actor)
     result = 'No entries found'
     if debts:
         page = debts[f:t]
-        result = f'<i>history for {username}</i>\n'
+        result = f'<i>history for {actor}</i>\n'
         result += '\n'.join(map(str, page))
         result += f'<i>\n{str(f)}..{str(t)}/{str(len(debts))}</i>'
     buttons_raw = []
@@ -264,9 +264,9 @@ def help_command(update: telegram.Update, context: telegram.ext.CallbackContext)
 
 
 def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.effective_message.from_user)
+    actor = create_update_user(update.callback_query.from_user)
     query = update.callback_query.data
-    message = update.effective_message
+    message = update.callback_query.message
     update.callback_query.answer()
 
     if query == 'delete':
