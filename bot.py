@@ -41,6 +41,29 @@ def parse_mentions(message: telegram.Message) -> list[User]:
     return result
 
 
+def parse_message(message: telegram.Message) -> (int, str):
+    total = 0.
+    pure_description = message.text
+    for entity in message.entities:
+        f = entity.offset
+        t = entity.offset + entity.length
+        pure_description = pure_description[:f] + ' ' * entity.length + pure_description[t:]
+    words = pure_description.split()
+    price_index = None
+    for index, word in enumerate(words):
+        try:
+            total = float(word)
+            price_index = index
+        except Exception as e:
+            pass
+    print(price_index)
+    print(words)
+    words.pop(price_index)
+    print(words)
+    pure_description = " ".join(words)
+    return total, pure_description
+
+
 def create_update_user(user: telegram.User) -> User:
     return debts_manager.create_update_user(
         telegram_id=user.id,
@@ -84,12 +107,11 @@ def owe_lend_split_response(
         return
 
     total = .0
-    for arg in args:
-        try:
-            # TODO: parse cents 3.30
-            total = float(arg)
-        except Exception as e:
-            print(e)
+    description = ' '.join(args)
+    try:
+        total, description = parse_message(message=update.message)
+    except Exception as e:
+        pass
 
     lenders = [actor]
     debtors = parse_mentions(update.message)
@@ -103,7 +125,7 @@ def owe_lend_split_response(
         lenders=lenders,
         debtors=debtors,
         # TODO: Remove mentions from description
-        description=' '.join(args),
+        description=description,
         group_type=update.effective_chat.type,
         chat_id=update.effective_chat.id,
         message_id=update.effective_message.message_id,

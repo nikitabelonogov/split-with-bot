@@ -146,19 +146,26 @@ class Debt(Base):
     def total_formated(self) -> str:
         return f"{self.total}{static.currency_char}"
 
-    def telegram_html_message(self) -> str:
-        debtors_text = 'no debtors'
+    def debtors_formated(self) -> str:
         if len(self.debtors) == 1:
-            debtors_text = f'to {mentions(self.debtors)}'
-        elif len(self.debtors) > 1:
-            debtors_text = f'split between: {mentions(self.debtors)} ({self.fraction()}{static.currency_char})'
+            return f'to {mentions(self.debtors)}'
+        if len(self.debtors) > 1:
+            return f'split between: {mentions(self.debtors)} ({self.fraction()}{static.currency_char})'
+        return 'no debtors'
+
+    def description_formated(self) -> str:
+        if self.description:
+            return f'"{self.description}"'
+        return 'no description'
+
+    def telegram_html_message(self) -> str:
         return " ".join(map(str, [
             self.date_with_link_html(),
             self.id,
             mentions(self.lenders),
-            self.description,
+            self.description_formated(),
             self.total_formated(),
-            debtors_text,
+            self.debtors_formated(),
         ]))
 
     def fraction(self) -> float:
