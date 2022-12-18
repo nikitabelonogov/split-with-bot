@@ -16,6 +16,8 @@ def get_or_create(session: Session, model, **kwargs):
         session.commit()
         return instance
 
+def get_datetime(x: Debt):
+    return x.datetime
 
 class DebtsManager:
     def __init__(self, database_url, debug=False):
@@ -33,6 +35,9 @@ class DebtsManager:
         elif username:
             return self.session.query(User).filter(User.username == username).first()
         return None
+
+    def get_all_users(self) -> list[User]:
+        return self.session.query(User).all()
 
     def create_update_user(self,
                            telegram_id: int = None,
@@ -99,7 +104,7 @@ class DebtsManager:
 
     def related_debts(self, user: User) -> list[Debt]:
         self.session.refresh(user)
-        return list(set(user.debts + user.lends))
+        return sorted(list(set(user.debts + user.lends)), key=get_datetime, reverse=True)
 
     def getDebtByID(self, debt_id: int) -> Debt:
         return self.session.query(Debt).get(debt_id)
