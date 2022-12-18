@@ -124,7 +124,6 @@ def owe_lend_split_response(
         total=total,
         lenders=lenders,
         debtors=debtors,
-        # TODO: Remove mentions from description
         description=description,
         group_type=update.effective_chat.type,
         chat_id=update.effective_chat.id,
