@@ -38,7 +38,6 @@ def parse_mentions(message: telegram.Message) -> list[User]:
             result.append(user)
         else:
             pass
-    print(result)
     return result
 
 
@@ -54,15 +53,26 @@ def create_update_user(user: telegram.User) -> User:
 
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     actor = create_update_user(update.message.from_user)
-    lend_split_response(update, context, actor, split=True)
+    owe_lend_split_response(update, context, actor, split=True)
 
 
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     actor = create_update_user(update.message.from_user)
-    lend_split_response(update, context, actor, split=False)
+    owe_lend_split_response(update, context, actor, split=False)
 
 
-def lend_split_response(update: telegram.Update, context: telegram.ext.CallbackContext, actor: User, split: bool = False):
+def owe_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
+    owe_lend_split_response(update, context, actor, split=False, owe=True)
+
+
+def owe_lend_split_response(
+        update: telegram.Update,
+        context: telegram.ext.CallbackContext,
+        actor: User,
+        split: bool = False,
+        owe: bool = False,
+):
     args = context.args
 
     if not args:
@@ -81,13 +91,16 @@ def lend_split_response(update: telegram.Update, context: telegram.ext.CallbackC
         except Exception as e:
             print(e)
 
+    lenders = [actor]
     debtors = parse_mentions(update.message)
     if split:
         debtors.append(actor)
     debtors = list(set(debtors))
+    if owe:
+        debtors, lenders = lenders, debtors
     debt = debts_manager.lend(
         total=total,
-        lenders=[actor],
+        lenders=lenders,
         debtors=debtors,
         # TODO: Remove mentions from description
         description=' '.join(args),
@@ -209,10 +222,10 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
 
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     actor = create_update_user(update.message.from_user)
-    print(str(actor))
     args = context.args
     update.message.reply_text(str(actor), parse_mode='html')
-    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">{actor.custom_name}</a>', parse_mode='html')
+    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">{actor.custom_name}</a>',
+    # parse_mode='html')
     # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">asdfasdf</a>', parse_mode='html')
     # update.message.reply_text(f"[{actor.custom_name}](tg://user?id={actor.telegram_id})", parse_mode='Markdown')
 
@@ -313,6 +326,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('split', split_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('lend', lend_command, pass_args=True))
+    dispatcher.add_handler(CommandHandler('owe', owe_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('debt', debt_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))

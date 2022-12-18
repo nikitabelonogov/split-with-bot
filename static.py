@@ -2,6 +2,7 @@ help_message = \
     """
 <code>/split</code> [description] [sum] [username...] - lend a split check between users and you
 <code>/lend</code> [description] [sum] [username...] - lend a split check between users
+<code>/owe</code> [description] [sum] [username...] - owe a split check between users
 <code>/history</code>  - show history of debts
 <code>/status</code> - show totals
 <code>/help</code> - show help message
