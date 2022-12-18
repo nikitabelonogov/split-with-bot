@@ -138,3 +138,9 @@ class DebtsManager:
         self.session.commit()
         self.session.refresh(debt)
         return debt
+
+    def remove_debt(self, debt_id: int):
+        debt = self.getDebtByID(debt_id)
+        print(debt)
+        self.session.delete(debt)
+        self.session.commit()
