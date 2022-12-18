@@ -233,25 +233,10 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
     update.message.reply_text('\n'.join(map(str, response)) or 'No entries found', parse_mode='html')
 
 
-# def delete_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-#     args = context.args
-#     username = '@' + update.message.from_user.username
-#     if args:
-#         for username2 in args:
-#             debts_manager.delete(username, username2)
-#         update.message.reply_text('Deleted')
-#     else:
-#         update.message.reply_text('No username specified')
-
-
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
     actor = create_update_user(update.message.from_user)
     args = context.args
     update.message.reply_text(str(actor), parse_mode='html')
-    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">{actor.custom_name}</a>',
-    # parse_mode='html')
-    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">asdfasdf</a>', parse_mode='html')
-    # update.message.reply_text(f"[{actor.custom_name}](tg://user?id={actor.telegram_id})", parse_mode='Markdown')
 
 
 def help_command(update: telegram.Update, context: telegram.ext.CallbackContext):
