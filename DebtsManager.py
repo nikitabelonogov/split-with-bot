@@ -101,23 +101,6 @@ class DebtsManager:
         self.session.refresh(user)
         return list(set(user.debts + user.lends))
 
-    # def delete(self, username1, username2=None):
-    #     session = Session(bind=self.engine)
-    #     if username2:
-    #         session.query(Debt). \
-    #             filter(Debt.lender != Debt.debtor). \
-    #             filter(Debt.active). \
-    #             filter(or_(and_(Debt.lender == username1, Debt.debtor == username2),
-    #                        and_(Debt.lender == username2, Debt.debtor == username1))). \
-    #             delete(synchronize_session='fetch')
-    #     else:
-    #         session.query(Debt). \
-    #             filter(Debt.lender != Debt.debtor). \
-    #             filter(Debt.active). \
-    #             filter(or_(Debt.lender == username1, Debt.debtor == username1)). \
-    #             delete(synchronize_session='fetch')
-    #     session.commit()
-
     def getDebtByID(self, debt_id: int) -> Debt:
         return self.session.query(Debt).get(debt_id)
 

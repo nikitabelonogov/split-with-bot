@@ -131,6 +131,10 @@ def debt_response(
                 static.debt_button_remove_debt_text,
                 callback_data=f"remove-debt-{str(debt.id)}",
             ),
+            telegram.InlineKeyboardButton(
+                static.debt_button_check_debt_text,
+                callback_data=f"check-debt-{str(debt.id)}",
+            ),
         ],
     ]
     if edit_message_id is not None:
@@ -293,6 +297,13 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
             chat_id=update.effective_chat.id,
             message_id=message.message_id,
         )
+    elif query.startswith('check-debt-'):
+        context.bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id=message.message_id,
+            text=message.text,
+            parse_mode='html',
+        )
     else:
         context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -325,7 +336,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(CommandHandler('debt', debt_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('history', history_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('status', status_command, pass_args=True))
-    # dispatcher.add_handler(CommandHandler('delete', delete_command, pass_args=True))
     dispatcher.add_handler(CommandHandler('start', start_command))
     dispatcher.add_handler(CommandHandler('help', help_command))
     dispatcher.add_handler(CallbackQueryHandler(queryHandler))
