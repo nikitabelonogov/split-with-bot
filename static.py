@@ -31,3 +31,5 @@ example: <code>/debt 1</code>
 
 debt_button_add_myself_to_debtors_text = "Add myself to debtors"
 debt_button_remove_myself_from_debtors_text = "Remove myself from debtors"
+
+error_message = "ERROR! got to https://github.com/nikitabelonogov/split-with-bot and fix it yourself"

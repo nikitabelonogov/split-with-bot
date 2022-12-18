@@ -295,7 +295,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
 def error_callback(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     error = context.error
-    update.message.reply_text(f'[ERROR]:\n{str(error)}')
+    update.message.reply_text(f'{static.error_message}\n{str(error)}')
     print(str(error))
 
 
