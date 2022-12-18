@@ -56,10 +56,7 @@ def parse_message(message: telegram.Message) -> (int, str):
             price_index = index
         except Exception as e:
             pass
-    print(price_index)
-    print(words)
     words.pop(price_index)
-    print(words)
     pure_description = " ".join(words)
     return total, pure_description
 
@@ -75,17 +72,17 @@ def create_update_user(user: telegram.User) -> User:
 
 
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     owe_lend_split_response(update, context, actor, split=True)
 
 
 def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     owe_lend_split_response(update, context, actor, split=False)
 
 
 def owe_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     owe_lend_split_response(update, context, actor, split=False, owe=True)
 
 
@@ -109,12 +106,12 @@ def owe_lend_split_response(
     total = .0
     description = ' '.join(args)
     try:
-        total, description = parse_message(message=update.message)
+        total, description = parse_message(message=update.effective_message)
     except Exception as e:
         pass
 
     lenders = [actor]
-    debtors = parse_mentions(update.message)
+    debtors = parse_mentions(update.effective_message)
     if split:
         debtors.append(actor)
     debtors = list(set(debtors))
@@ -176,7 +173,7 @@ def debt_response(
 
 
 def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     args = context.args
     if not args:
         context.bot.send_message(
@@ -190,7 +187,7 @@ def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext)
 
 
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     args = context.args
     message_text, reply_markup = generate_history_message(actor)
     context.bot.send_message(
@@ -234,7 +231,7 @@ def generate_history_message(
 
 
 def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     args = context.args
     totals = {}
     debts = debts_manager.related_debts(actor)
@@ -251,25 +248,25 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
             response.append(f'{str(actor)} owes {username} {-total}{static.currency_char} in total')
         elif total >= 1.:
             response.append(f'{str(actor)} lent {username} {total}{static.currency_char} in total')
-    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found', parse_mode='html')
+    update.effective_message.reply_text('\n'.join(map(str, response)) or 'No entries found', parse_mode='html')
 
 
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     args = context.args
-    update.message.reply_text(str(actor), parse_mode='html')
+    update.effective_message.reply_text(str(actor), parse_mode='html')
 
 
 def help_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.message.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     args = context.args
-    update.message.reply_text(static.help_message, parse_mode='html')
+    update.effective_message.reply_text(static.help_message, parse_mode='html')
 
 
 def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext):
-    actor = create_update_user(update.callback_query.from_user)
+    actor = create_update_user(update.effective_message.from_user)
     query = update.callback_query.data
-    message = update.callback_query.message
+    message = update.effective_message
     update.callback_query.answer()
 
     if query == 'delete':
@@ -320,7 +317,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
 def error_callback(update: telegram.Update, context: telegram.ext.CallbackContext):
     args = context.args
     error = context.error
-    update.message.reply_text(f'{static.error_message}\n{str(error)}')
+    update.effective_message.reply_text(f'{static.error_message}\n{str(error)}')
     print(str(error))
 
 
