@@ -6,6 +6,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 import static
 from DebtsManager import DebtsManager
+from Models import User, Debt
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -17,25 +18,51 @@ HISTORY_PAGE_SIZE = 10
 
 # TODO: integrate logger
 
-def parse_mentions(message: telegram.Message) -> list[str]:
+def parse_mentions(message: telegram.Message) -> list[User]:
     result = []
     for entity in message.entities:
         if entity.type == telegram.MessageEntity.MENTION:
-            username = message.text[entity.offset:entity.offset + entity.length]
-            result.append(username)
+            f = entity.offset + 1
+            t = entity.offset + entity.length
+            username = message.text[f:t]
+            user = debts_manager.create_update_user(username=username)
+            result.append(user)
         elif entity.type == telegram.MessageEntity.TEXT_MENTION:
-            result.append(str(entity.user.id))
+            user = debts_manager.create_update_user(
+                telegram_id=entity.user.id,
+                username=entity.user.username,
+                first_name=entity.user.first_name,
+                last_name=entity.user.last_name,
+                is_bot=entity.user.is_bot,
+            )
+            result.append(user)
         else:
             pass
+    print(result)
     return result
 
 
+def create_update_user(user: telegram.User) -> User:
+    return debts_manager.create_update_user(
+        telegram_id=user.id,
+        username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        is_bot=user.is_bot,
+    )
+
+
 def split_command(update: telegram.Update, context: telegram.ext.CallbackContext):
-    lend_command(update, context, split=True)
+    actor = create_update_user(update.message.from_user)
+    lend_split_response(update, context, actor, split=True)
 
 
-def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext, split: bool = False):
-    # TODO: Add interactive lend
+def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
+    lend_split_response(update, context, actor, split=False)
+
+
+def lend_split_response(update: telegram.Update, context: telegram.ext.CallbackContext, actor: User, split: bool = False):
     args = context.args
 
     if not args:
@@ -45,9 +72,6 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
             parse_mode='html',
         )
         return
-
-    lender = '@' + update.message.from_user.username
-    lenders = [lender]
 
     total = .0
     for arg in args:
@@ -59,19 +83,22 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
 
     debtors = parse_mentions(update.message)
     if split:
-        debtors.append(lender)
+        debtors.append(actor)
     debtors = list(set(debtors))
     debt = debts_manager.lend(
         total=total,
-        lenders_nicknames=lenders,
-        debtors_nicknames=debtors,
+        lenders=[actor],
+        debtors=debtors,
         # TODO: Remove mentions from description
         description=' '.join(args),
         group_type=update.effective_chat.type,
         chat_id=update.effective_chat.id,
         message_id=update.effective_message.message_id,
     )
+    debt_response(update, context, debt)
 
+
+def debt_response(update: telegram.Update, context: telegram.ext.CallbackContext, debt: Debt):
     buttons = [[
         telegram.InlineKeyboardButton(
             static.debt_button_remove_myself_from_debtors_text,
@@ -91,6 +118,7 @@ def lend_command(update: telegram.Update, context: telegram.ext.CallbackContext,
 
 
 def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
     args = context.args
     if not args:
         context.bot.send_message(
@@ -100,30 +128,13 @@ def debt_command(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
         return
     debt = debts_manager.getDebtByID(int(args[0]))
-    buttons = [[
-        telegram.InlineKeyboardButton(
-            static.debt_button_remove_myself_from_debtors_text,
-            callback_data=f"remove-from-debt-{str(debt.id)}",
-        ),
-        telegram.InlineKeyboardButton(
-            static.debt_button_add_myself_to_debtors_text,
-            callback_data=f"add-to-debt-{str(debt.id)}",
-        ),
-    ]]
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=debt.telegram_html_message(),
-        reply_markup=telegram.InlineKeyboardMarkup(buttons),
-        parse_mode='html',
-    )
-
-
+    debt_response(update, context, debt)
 
 
 def history_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
     args = context.args
-    username = '@' + update.message.from_user.username
-    message_text, reply_markup = generate_history_message(username)
+    message_text, reply_markup = generate_history_message(actor)
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=message_text,
@@ -133,7 +144,7 @@ def history_command(update: telegram.Update, context: telegram.ext.CallbackConte
 
 
 def generate_history_message(
-        username: str,
+        username: User,
         f: int = 0,
         t: int = HISTORY_PAGE_SIZE,
 ) -> (str, telegram.InlineKeyboardMarkup):
@@ -165,25 +176,24 @@ def generate_history_message(
 
 
 def status_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
     args = context.args
-    username = '@' + update.message.from_user.username
     totals = {}
-    user = debts_manager.get_or_create_user(username)
-    debts = debts_manager.related_debts(username)
+    debts = debts_manager.related_debts(actor)
     for debt in debts:
         for debtor in debt.debtors:
-            if user in debt.lenders:
-                totals[debtor.nickname] = totals.get(debtor.nickname, 0.) + debt.fraction()
+            if actor in debt.lenders:
+                totals[str(debtor)] = totals.get(str(debtor), 0.) + debt.fraction()
         for lender in debt.lenders:
-            if user in debt.debtors:
-                totals[lender.nickname] = totals.get(lender.nickname, 0.) - debt.fraction()
+            if actor in debt.debtors:
+                totals[str(lender)] = totals.get(str(lender), 0.) - debt.fraction()
     response = []
-    for nickname, total in totals.items():
+    for username, total in totals.items():
         if total <= -1.:
-            response.append(f'{username} owes {nickname} {-total}{static.currency_char} in total')
+            response.append(f'{str(actor)} owes {username} {-total}{static.currency_char} in total')
         elif total >= 1.:
-            response.append(f'{username} lent {nickname} {total}{static.currency_char} in total')
-    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found')
+            response.append(f'{str(actor)} lent {username} {total}{static.currency_char} in total')
+    update.message.reply_text('\n'.join(map(str, response)) or 'No entries found', parse_mode='html')
 
 
 # def delete_command(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -198,27 +208,26 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
 
 
 def start_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
+    print(str(actor))
     args = context.args
-    update.message.reply_text(static.start_message, parse_mode='html')
+    update.message.reply_text(str(actor), parse_mode='html')
+    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">{actor.custom_name}</a>', parse_mode='html')
+    # update.message.reply_text(f'<a href="tg://user?id={actor.telegram_id}">asdfasdf</a>', parse_mode='html')
+    # update.message.reply_text(f"[{actor.custom_name}](tg://user?id={actor.telegram_id})", parse_mode='Markdown')
 
 
 def help_command(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.message.from_user)
     args = context.args
     update.message.reply_text(static.help_message, parse_mode='html')
 
 
-def error_callback(update: telegram.Update, context: telegram.ext.CallbackContext):
-    args = context.args
-    error = context.error
-    update.message.reply_text(f'[ERROR]:\n{str(error)}')
-    print(str(error))
-
-
 def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext):
+    actor = create_update_user(update.callback_query.from_user)
     query = update.callback_query.data
     message = update.callback_query.message
     update.callback_query.answer()
-    username = '@' + update.callback_query.from_user.username
 
     if query == 'delete':
         context.bot.delete_message(
@@ -228,7 +237,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
     elif query.startswith('history'):
         _, f, t = query.split('-')
         # TODO: use origin user's history
-        message_text, reply_markup = generate_history_message(username, f=int(f), t=int(t))
+        message_text, reply_markup = generate_history_message(actor, f=int(f), t=int(t))
         context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=message.message_id,
@@ -238,7 +247,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
     elif query.startswith('remove-from-debt'):
         debt_id = int(query.split('-')[-1])
-        debt = debts_manager.remove_debtor(debt_id, username)
+        debt = debts_manager.remove_debtor(debt_id, actor)
         buttons = [[
             telegram.InlineKeyboardButton(
                 static.debt_button_remove_myself_from_debtors_text,
@@ -258,7 +267,7 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
         )
     elif query.startswith('add-to-debt'):
         debt_id = int(query.split('-')[-1])
-        debt = debts_manager.add_debtor(debt_id, username)
+        debt = debts_manager.add_debtor(debt_id, actor)
         buttons = [[
             telegram.InlineKeyboardButton(
                 static.debt_button_remove_myself_from_debtors_text,
@@ -281,6 +290,13 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
             chat_id=update.effective_chat.id,
             text=f'Unknown query "{query}"',
         )
+
+
+def error_callback(update: telegram.Update, context: telegram.ext.CallbackContext):
+    args = context.args
+    error = context.error
+    update.message.reply_text(f'[ERROR]:\n{str(error)}')
+    print(str(error))
 
 
 if __name__ == '__main__':

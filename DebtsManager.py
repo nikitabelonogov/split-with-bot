@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, or_, and_
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from Models import Base, Debt, User
@@ -24,15 +24,59 @@ class DebtsManager:
         self.session = Session(bind=self.engine)
         self.session.expire_on_commit = False
 
-    def get_or_create_user(self, nickname: str) -> User:
-        return get_or_create(self.session, User, nickname=nickname)
+    def get_user(self,
+                 telegram_id: int = None,
+                 username: str = None,
+                 ) -> User or None:
+        if telegram_id:
+            return self.session.query(User).filter(User.telegram_id == telegram_id).first()
+        elif username:
+            return self.session.query(User).filter(User.username == username).first()
+        return None
+
+    def create_update_user(self,
+                           telegram_id: int = None,
+                           first_name: str = None,
+                           last_name: str = None,
+                           username: str = None,
+                           is_bot: bool = False,
+                           ) -> User:
+        user = None
+        if username is not None:
+            user = self.get_user(username=username)
+        if user is None and telegram_id is not None:
+            user = self.get_user(telegram_id=telegram_id)
+
+        if user:
+            if telegram_id is not None:
+                user.telegram_id = telegram_id
+            if first_name is not None:
+                user.first_name = first_name
+            if last_name is not None:
+                user.last_name = last_name
+            if username is not None:
+                user.username = username
+            if is_bot is not None:
+                user.is_bot = is_bot
+        else:
+            user = User(
+                telegram_id=telegram_id,
+                first_name=first_name,
+                last_name=last_name,
+                username=username,
+                is_bot=is_bot
+            )
+        self.session.add(user)
+        self.session.commit()
+        self.session.refresh(user)
+        return user
 
     def lend(
             self,
             total: float,
             description: str = '',
-            lenders_nicknames: list[str] = None,
-            debtors_nicknames: list[str] = None,
+            lenders: list[User] = None,
+            debtors: list[User] = None,
             group_type: str = None,
             chat_id: str = None,
             message_id: str = None,
@@ -45,18 +89,16 @@ class DebtsManager:
             message_id=message_id,
         )
 
-        for lender_nickname in lenders_nicknames:
-            debt.lenders.append(self.get_or_create_user(lender_nickname))
-
-        for debtor_nickname in debtors_nicknames:
-            debt.debtors.append(self.get_or_create_user(debtor_nickname))
+        debt.add_debtors(debtors)
+        debt.add_lenders(lenders)
 
         self.session.add(debt)
         self.session.commit()
-        return self.getDebtByID(debt.id)
+        self.session.refresh(debt)
+        return debt
 
-    def related_debts(self, username: str) -> list[Debt]:
-        user = self.get_or_create_user(username)
+    def related_debts(self, user: User) -> list[Debt]:
+        self.session.refresh(user)
         return list(set(user.debts + user.lends))
 
     # def delete(self, username1, username2=None):
@@ -79,20 +121,20 @@ class DebtsManager:
     def getDebtByID(self, debt_id: int) -> Debt:
         return self.session.query(Debt).get(debt_id)
 
-    def add_debtor(self, debt_id: int, username: str) -> Debt:
+    def add_debtor(self, debt_id: int, user: User) -> Debt:
         debt = self.getDebtByID(debt_id)
-        user = self.get_or_create_user(username)
         self.session.add(user)
         debt.add_debtors([user])
         self.session.add(debt)
         self.session.commit()
-        return self.getDebtByID(debt.id)
+        self.session.refresh(debt)
+        return debt
 
-    def remove_debtor(self, debt_id: int, username: str) -> Debt:
+    def remove_debtor(self, debt_id: int, user: User) -> Debt:
         debt = self.getDebtByID(debt_id)
-        user = self.get_or_create_user(username)
         self.session.add(user)
         debt.remove_debtors([user])
         self.session.add(debt)
         self.session.commit()
-        return self.getDebtByID(debt.id)
+        self.session.refresh(debt)
+        return debt

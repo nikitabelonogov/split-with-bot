@@ -30,24 +30,53 @@ lenders_association_table = Table(
 class User(Base):
     __tablename__ = USER_TABLE_NAME
     id = Column(Integer, primary_key=True)
-    nickname = Column(String)
+    telegram_id = Column(Integer, unique=True, nullable=True)
+    username = Column(String, unique=True, nullable=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    is_bot = Column(Boolean, default=False)
+    custom_name = Column(String, nullable=True)
     lends = relationship("Debt", secondary=lenders_association_table, back_populates="lenders")
     debts = relationship("Debt", secondary=debtors_association_table, back_populates="debtors")
 
     def __init__(
-            self, nickname,
+            self,
+            telegram_id: int = None,
+            first_name: str = None,
+            last_name: str = None,
+            username: str = None,
+            is_bot: bool = False,
             *args: Any,
             **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
-        self.nickname = nickname
+        self.telegram_id = telegram_id
+        self.first_name = first_name
+        self.last_name = last_name
+        self.username = username
+        self.is_bot = bool(is_bot)
 
     def __str__(self) -> str:
-        return self.nickname
+        return self.telegram_html_message()
+
+    def fullname(self) -> str:
+        if self.custom_name is not None:
+            if len(self.custom_name) == 1:
+                return f'@{str(self.custom_name)}'
+            return str(self.custom_name)
+
+        return f'{self.first_name} {self.last_name}'
+
+    def telegram_html_message(self) -> str:
+        if self.telegram_id is not None:
+            return f'<a href="tg://user?id={self.telegram_id}">{self.fullname()}</a>'
+        if self.username is not None:
+            return f'@{self.username}'
+        return '???'
 
 
 def mentions(users: list[User]) -> str:
-    return ', '.join([u.nickname for u in users])
+    return ', '.join([str(u) for u in users])
 
 
 class Debt(Base):
