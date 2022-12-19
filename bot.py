@@ -234,15 +234,22 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
     actor = create_update_user(update.effective_message.from_user)
     args = context.args
     totals = {}
+    total_total = 0.
     debts = debts_manager.related_debts(actor)
     for debt in debts:
         for debtor in debt.debtors:
             if actor in debt.lenders:
                 totals[str(debtor)] = totals.get(str(debtor), 0.) + debt.fraction()
+                total_total += debt.fraction()
         for lender in debt.lenders:
             if actor in debt.debtors:
                 totals[str(lender)] = totals.get(str(lender), 0.) - debt.fraction()
+                total_total -= debt.fraction()
     response = []
+    if total_total <= -1.:
+        response.append(f'{str(actor)} owes {-total_total}{static.currency_char} in total')
+    elif total_total >= 1.:
+        response.append(f'{str(actor)} lent {total_total}{static.currency_char} in total')
     for username, total in totals.items():
         if total <= -1.:
             response.append(f'{str(actor)} owes {username} {-total}{static.currency_char} in total')
