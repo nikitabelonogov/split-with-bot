@@ -6,7 +6,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 import static
 from DebtsManager import DebtsManager
-from Models import User, Debt
+from Models import User, Debt, round_money
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -247,14 +247,14 @@ def status_command(update: telegram.Update, context: telegram.ext.CallbackContex
                 total_total -= debt.fraction()
     response = []
     if total_total <= -1.:
-        response.append(f'{str(actor)} owes {-total_total}{static.currency_char} in total')
+        response.append(f'{str(actor)} owes {round_money(-total_total)} in total')
     elif total_total >= 1.:
-        response.append(f'{str(actor)} lent {total_total}{static.currency_char} in total')
+        response.append(f'{str(actor)} lent {round_money(total_total)} in total')
     for username, total in totals.items():
         if total <= -1.:
-            response.append(f'{str(actor)} owes {username} {-total}{static.currency_char} in total')
+            response.append(f'{str(actor)} owes {username} {round_money(-total)} in total')
         elif total >= 1.:
-            response.append(f'{str(actor)} lent {username} {total}{static.currency_char} in total')
+            response.append(f'{str(actor)} lent {username} {round_money(total)} in total')
     update.effective_message.reply_text('\n'.join(map(str, response)) or 'No entries found', parse_mode='html')
 
 

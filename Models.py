@@ -27,6 +27,10 @@ lenders_association_table = Table(
 )
 
 
+def round_money(amount: float, currency_symbol: str = static.currency_char) -> str:
+    return "{:,.2f}{}".format(amount, currency_symbol)
+
+
 class User(Base):
     __tablename__ = USER_TABLE_NAME
     id = Column(Integer, primary_key=True)
@@ -144,13 +148,13 @@ class Debt(Base):
             return raw_date
 
     def total_formated(self) -> str:
-        return f"{self.total}{static.currency_char}"
+        return round_money(self.total)
 
     def debtors_formated(self) -> str:
         if len(self.debtors) == 1:
             return f'to {mentions(self.debtors)}'
         if len(self.debtors) > 1:
-            return f'split between: {mentions(self.debtors)} ({self.fraction()}{static.currency_char})'
+            return f'split between: {mentions(self.debtors)} ({round_money(self.fraction())})'
         return 'no debtors'
 
     def description_formated(self) -> str:
