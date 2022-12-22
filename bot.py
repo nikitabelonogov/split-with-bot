@@ -215,14 +215,14 @@ def generate_history_message(
         buttons_raw.append(
             telegram.InlineKeyboardButton(
                 "First Page",
-                callback_data=f"history-{str(0)}-{str(10)}"
+                callback_data=f"history-{str(0)}-{str(10)}-{actor.id}"
             )
         )
     if t < len(debts):
         buttons_raw.append(
             telegram.InlineKeyboardButton(
                 "Next Page",
-                callback_data=f"history-{str(f + HISTORY_PAGE_SIZE)}-{str(t + HISTORY_PAGE_SIZE)}"
+                callback_data=f"history-{str(f + HISTORY_PAGE_SIZE)}-{str(t + HISTORY_PAGE_SIZE)}-{actor.id}"
             )
         )
     buttons = [buttons_raw]
@@ -282,9 +282,9 @@ def queryHandler(update: telegram.Update, context: telegram.ext.CallbackContext)
             message_id=message.message_id,
         )
     elif query.startswith('history'):
-        _, f, t = query.split('-')
-        # TODO: use origin user's history
-        message_text, reply_markup = generate_history_message(actor, f=int(f), t=int(t))
+        _, f, t, u = query.split('-')
+        user = debts_manager.get_user(user_id=u)
+        message_text, reply_markup = generate_history_message(user, f=int(f), t=int(t))
         context.bot.edit_message_text(
             chat_id=update.effective_chat.id,
             message_id=message.message_id,

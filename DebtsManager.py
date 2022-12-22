@@ -31,10 +31,13 @@ class DebtsManager:
     def get_user(self,
                  telegram_id: int = None,
                  username: str = None,
+                 user_id: int = None,
                  ) -> User or None:
+        if user_id:
+            return self.session.query(User).get(user_id)
         if telegram_id:
             return self.session.query(User).filter(User.telegram_id == telegram_id).first()
-        elif username:
+        if username:
             return self.session.query(User).filter(User.username == username).first()
         return None
 
