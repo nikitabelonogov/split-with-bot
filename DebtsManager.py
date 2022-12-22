@@ -16,8 +16,10 @@ def get_or_create(session: Session, model, **kwargs):
         session.commit()
         return instance
 
+
 def get_datetime(x: Debt):
     return x.datetime
+
 
 class DebtsManager:
     def __init__(self, database_url, debug=False):

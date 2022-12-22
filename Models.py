@@ -68,8 +68,9 @@ class User(Base):
             if len(self.custom_name) == 1:
                 return f'@{str(self.custom_name)}'
             return str(self.custom_name)
-
-        return f'{self.first_name} {self.last_name}'
+        if self.last_name is not None:
+            return f'{self.first_name} {self.last_name}'
+        return f'{self.first_name}'
 
     def telegram_html_message(self) -> str:
         if self.telegram_id is not None:
