@@ -12,7 +12,7 @@ start_message = \
     """
 This telegram bot helps you to split a receipts with your friends.
 """
-currency_char = "🪙"
+currency_char = "ლ"
 lend_command_args_missing_message = \
     """
 args are missing or not correct  😞
