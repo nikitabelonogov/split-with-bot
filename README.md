@@ -23,8 +23,16 @@ This telegram bot helps you to split a receipts with your friends
 | DEBUG                 | debug                   |
 
 ### webhook mode
+TBD
 
 ### pooling mode
+TBD
+
+## Heroku
+database credentials
+```shell
+heroku config:get DATABASE_URL -a split-with-bot
+```
 
 ## License
 This project is licensed under [GLWTPL](./LICENSE)
